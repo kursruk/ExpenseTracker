@@ -27,11 +27,21 @@
     "created": "Создано",
     "updated": "Обновлено"
   },
+  "settings": {
+    "title": "Настройки",
+    "language": "Язык",
+    "selectLanguage": "Выберите язык",
+    "username": "Имя пользователя",
+    "password": "Пароль",
+    "save": "Сохранить настройки"
+  },
   "messages": {
     "addSuccess": "Расход успешно добавлен",
     "updateSuccess": "Расход успешно обновлен",
     "deleteSuccess": "Расход успешно удален",
     "publishSuccess": "Расходы успешно опубликованы",
+    "settingsSaved": "Настройки сохранены",
+    "settingsUpdated": "Ваши настройки были обновлены",
     "error": "Ошибка",
     "addError": "Не удалось добавить расход",
     "updateError": "Не удалось обновить расход",

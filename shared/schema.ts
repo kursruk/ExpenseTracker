@@ -5,7 +5,7 @@ export const expenseSchema = z.object({
   date: z.string(),
   item: z.string().min(1, "Item name is required"),
   price: z.number().min(0, "Price must be positive"),
-  count: z.number().int().min(1, "Count must be at least 1"),
+  count: z.number().min(0.1, "Count must be at least 0.1"),
   vendor: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime()

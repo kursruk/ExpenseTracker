@@ -27,11 +27,21 @@
     "created": "Created",
     "updated": "Updated"
   },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "selectLanguage": "Select language",
+    "username": "Username",
+    "password": "Password",
+    "save": "Save Settings"
+  },
   "messages": {
     "addSuccess": "Expense added successfully",
     "updateSuccess": "Expense updated successfully",
     "deleteSuccess": "Expense deleted successfully",
     "publishSuccess": "Expenses published successfully",
+    "settingsSaved": "Settings saved",
+    "settingsUpdated": "Your settings have been updated",
     "error": "Error",
     "addError": "Failed to add expense",
     "updateError": "Failed to update expense",

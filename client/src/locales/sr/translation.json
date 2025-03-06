@@ -27,11 +27,21 @@
     "created": "Креирано",
     "updated": "Ажурирано"
   },
+  "settings": {
+    "title": "Подешавања",
+    "language": "Језик",
+    "selectLanguage": "Изаберите језик",
+    "username": "Корисничко име",
+    "password": "Лозинка",
+    "save": "Сачувај подешавања"
+  },
   "messages": {
     "addSuccess": "Трошак успешно додат",
     "updateSuccess": "Трошак успешно ажуриран",
     "deleteSuccess": "Трошак успешно обрисан",
     "publishSuccess": "Трошкови успешно објављени",
+    "settingsSaved": "Подешавања сачувана",
+    "settingsUpdated": "Ваша подешавања су ажурирана",
     "error": "Грешка",
     "addError": "Грешка при додавању трошка",
     "updateError": "Грешка при ажурирању трошка",

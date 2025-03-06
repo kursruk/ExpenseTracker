@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Expense, InsertExpense } from '@shared/schema';
 import { apiRequest } from './queryClient';
+import { useSettingsStore } from './settings';
 
 const STORAGE_KEY = 'expenses';
 
@@ -53,8 +54,28 @@ export function getExpense(id: string): Expense | undefined {
 
 export async function publishExpenses(): Promise<{ success: boolean, message: string }> {
   const expenses = getExpenses();
+  const { username, password } = useSettingsStore.getState();
+
   try {
-    const response = await apiRequest('POST', '/api/expenses/publish', expenses);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (username && password) {
+      const base64Credentials = btoa(`${username}:${password}`);
+      headers['Authorization'] = `Basic ${base64Credentials}`;
+    }
+
+    const response = await fetch('/api/expenses/publish', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(expenses)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to publish expenses');
+    }
+
     const result = await response.json();
     return result;
   } catch (error) {
