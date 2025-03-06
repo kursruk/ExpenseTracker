@@ -6,14 +6,20 @@ import NotFound from "@/pages/not-found";
 import ExpensesPage from "@/pages/expenses";
 import AddExpensePage from "@/pages/expenses/add";
 import EditExpensePage from "@/pages/expenses/edit/[id]";
+import ArchivePage from "@/pages/expenses/archive";
 import SettingsPage from "@/pages/settings";
-import { Settings } from "lucide-react";
+import { Settings, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
-      <div className="fixed top-4 right-4">
+      <div className="fixed top-4 right-4 flex gap-2">
+        <Link href="/expenses/archive">
+          <Button variant="ghost" size="icon">
+            <Archive className="h-5 w-5" />
+          </Button>
+        </Link>
         <Link href="/settings">
           <Button variant="ghost" size="icon">
             <Settings className="h-5 w-5" />
@@ -33,6 +39,7 @@ function Router() {
         <Route path="/expenses" component={ExpensesPage} />
         <Route path="/expenses/add" component={AddExpensePage} />
         <Route path="/expenses/edit/:id" component={EditExpensePage} />
+        <Route path="/expenses/archive" component={ArchivePage} />
         <Route path="/settings" component={SettingsPage} />
         <Route component={NotFound} />
       </Switch>

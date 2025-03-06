@@ -4,13 +4,62 @@ import { apiRequest } from './queryClient';
 import { useSettingsStore } from './settings';
 
 const STORAGE_KEY = 'expenses';
+const ARCHIVE_KEY = 'expenses_archive';
+
+interface ArchivedExpenses {
+  month: string; // Format: YYYY-MM
+  expenses: Expense[];
+}
 
 export function getExpenses(): Expense[] {
   const data = localStorage.getItem(STORAGE_KEY);
   return data ? JSON.parse(data) : [];
 }
 
+export function checkAndArchiveExpenses() {
+  const currentDate = new Date();
+  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const today = new Date();
+
+  if (today >= firstDayOfMonth && today.getDate() === 1) {
+    const expenses = getExpenses();
+    if (expenses.length > 0) {
+      // Archive last month's expenses
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1);
+      const archiveKey = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+
+      addToArchive(archiveKey, expenses);
+
+      // Clear current expenses
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    }
+  }
+}
+
+export function getArchive(): ArchivedExpenses[] {
+  const data = localStorage.getItem(ARCHIVE_KEY);
+  return data ? JSON.parse(data) : [];
+}
+
+export function addToArchive(month: string, expenses: Expense[]) {
+  const archive = getArchive();
+  const existingMonthIndex = archive.findIndex(a => a.month === month);
+
+  if (existingMonthIndex >= 0) {
+    archive[existingMonthIndex].expenses = expenses;
+  } else {
+    archive.push({ month, expenses });
+  }
+
+  localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
+}
+
+export function clearArchive() {
+  localStorage.setItem(ARCHIVE_KEY, JSON.stringify([]));
+}
+
 export function addExpense(expense: InsertExpense): Expense {
+  checkAndArchiveExpenses(); // Check if we need to archive before adding
   const expenses = getExpenses();
   const now = new Date().toISOString();
   const newExpense: Expense = {

@@ -20,9 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 interface ExpenseListProps {
   expenses: Expense[];
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }
 
-export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
+export function ExpenseList({ expenses, onDelete, readOnly = false }: ExpenseListProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<keyof Expense>("date");
@@ -86,22 +87,24 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle>{t('common.expenses')}</CardTitle>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handlePublish}
-            disabled={isPublishing || expenses.length === 0}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {isPublishing ? t('common.publishing') : t('common.publish')}
-          </Button>
-          <Link href="/expenses/add">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('common.addExpense')}
+        {!readOnly && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handlePublish}
+              disabled={isPublishing || expenses.length === 0}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {isPublishing ? t('common.publishing') : t('common.publish')}
             </Button>
-          </Link>
-        </div>
+            <Link href="/expenses/add">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('common.addExpense')}
+              </Button>
+            </Link>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="mb-4">

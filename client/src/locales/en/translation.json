@@ -7,6 +7,15 @@
     "search": "Search expenses...",
     "actions": "Actions"
   },
+  "archive": {
+    "title": "Expense Archive",
+    "selectMonth": "Select month to view",
+    "clearAll": "Clear Archive",
+    "confirmClear": "Are you sure you want to clear all archived expenses? This cannot be undone.",
+    "cleared": "Archive Cleared",
+    "clearedDescription": "All archived expenses have been removed",
+    "noData": "No archived expenses found"
+  },
   "form": {
     "date": "Date",
     "item": "Item",
