@@ -107,10 +107,11 @@ export function ExpenseForm({
               <FormLabel>{t("form.count")}</FormLabel>
               <FormControl>
                 <Input
+                  type="number"
                   step="0.01"
                   placeholder="0.00"
                   {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
                 />
               </FormControl>
               <FormMessage />

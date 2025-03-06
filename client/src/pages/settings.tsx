@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const settings = useSettingsStore();
+  const [, navigate] = useLocation();
 
   const form = useForm<SettingsForm>({
     defaultValues: {
@@ -34,6 +36,7 @@ export default function SettingsPage() {
       title: t('messages.settingsSaved'),
       description: t('messages.settingsUpdated')
     });
+    navigate("/expenses"); // Redirect to main page after saving
   };
 
   return (
