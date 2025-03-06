@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Expense } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ interface ExpenseListProps {
 }
 
 export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<keyof Expense>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -33,14 +35,14 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
       setIsPublishing(true);
       const result = await publishExpenses();
       toast({
-        title: "Success",
+        title: t('messages.publishSuccess'),
         description: result.message
       });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to publish expenses"
+        title: t('messages.error'),
+        description: t('messages.publishError')
       });
     } finally {
       setIsPublishing(false);
@@ -83,7 +85,7 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle>Expenses</CardTitle>
+        <CardTitle>{t('common.expenses')}</CardTitle>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -91,12 +93,12 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
             disabled={isPublishing || expenses.length === 0}
           >
             <Upload className="mr-2 h-4 w-4" />
-            {isPublishing ? 'Publishing...' : 'Publish'}
+            {isPublishing ? t('common.publishing') : t('common.publish')}
           </Button>
           <Link href="/expenses/add">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Add Expense
+              {t('common.addExpense')}
             </Button>
           </Link>
         </div>
@@ -104,7 +106,7 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
       <CardContent>
         <div className="mb-4">
           <Input
-            placeholder="Search expenses..."
+            placeholder={t('common.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -114,27 +116,27 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
             <TableHeader>
               <TableRow>
                 <TableHead onClick={() => handleSort("date")} className="cursor-pointer">
-                  Date {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
+                  {t('table.date')} {sortField === "date" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
                 <TableHead onClick={() => handleSort("item")} className="cursor-pointer">
-                  Item {sortField === "item" && (sortDirection === "asc" ? "↑" : "↓")}
+                  {t('table.item')} {sortField === "item" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
                 <TableHead onClick={() => handleSort("price")} className="cursor-pointer">
-                  Price {sortField === "price" && (sortDirection === "asc" ? "↑" : "↓")}
+                  {t('table.price')} {sortField === "price" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
                 <TableHead onClick={() => handleSort("count")} className="cursor-pointer">
-                  Count {sortField === "count" && (sortDirection === "asc" ? "↑" : "↓")}
+                  {t('table.count')} {sortField === "count" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
                 <TableHead onClick={() => handleSort("vendor")} className="cursor-pointer">
-                  Vendor {sortField === "vendor" && (sortDirection === "asc" ? "↑" : "↓")}
+                  {t('table.vendor')} {sortField === "vendor" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
                 <TableHead onClick={() => handleSort("createdAt")} className="cursor-pointer">
-                  Created {sortField === "createdAt" && (sortDirection === "asc" ? "↑" : "↓")}
+                  {t('table.created')} {sortField === "createdAt" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
                 <TableHead onClick={() => handleSort("updatedAt")} className="cursor-pointer">
-                  Updated {sortField === "updatedAt" && (sortDirection === "asc" ? "↑" : "↓")}
+                  {t('table.updated')} {sortField === "updatedAt" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

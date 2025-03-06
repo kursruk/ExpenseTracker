@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslation } from "react-i18next";
 import { InsertExpense, insertExpenseSchema } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,9 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFormProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
-  
+
   const form = useForm<InsertExpense>({
     resolver: zodResolver(insertExpenseSchema),
     defaultValues: defaultValues || {
@@ -32,8 +34,8 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to save expense"
+        title: t('messages.error'),
+        description: t('messages.addError')
       });
     }
   };
@@ -46,7 +48,7 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
           name="date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>{t('form.date')}</FormLabel>
               <FormControl>
                 <Input type="date" {...field} />
               </FormControl>
@@ -60,9 +62,9 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
           name="item"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Item</FormLabel>
+              <FormLabel>{t('form.item')}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter item name" {...field} />
+                <Input placeholder={t('form.itemPlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,7 +76,7 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
           name="price"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Price</FormLabel>
+              <FormLabel>{t('form.price')}</FormLabel>
               <FormControl>
                 <Input 
                   type="number" 
@@ -94,7 +96,7 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
           name="count"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Count</FormLabel>
+              <FormLabel>{t('form.count')}</FormLabel>
               <FormControl>
                 <Input 
                   type="number" 
@@ -113,16 +115,16 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
           name="vendor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Vendor (Optional)</FormLabel>
+              <FormLabel>{t('form.vendor')}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter vendor name (optional)" {...field} />
+                <Input placeholder={t('form.vendorPlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <Button type="submit" className="w-full">{submitLabel}</Button>
+        <Button type="submit" className="w-full">{t('form.submit')}</Button> {/* Added translation for submit button */}
       </form>
     </Form>
   );

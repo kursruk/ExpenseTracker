@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { ExpenseForm } from "@/components/expenses/expense-form";
 import { getExpense, updateExpense } from "@/lib/storage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,19 +10,20 @@ import { useToast } from "@/hooks/use-toast";
 export default function EditExpensePage({ params }: { params: { id: string } }) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [expense, setExpense] = useState<InsertExpense | undefined>();
 
   useEffect(() => {
     const existingExpense = getExpense(params.id);
     if (existingExpense) {
-      const { id, ...insertExpense } = existingExpense;
+      const { id, createdAt, updatedAt, ...insertExpense } = existingExpense;
       setExpense(insertExpense);
     } else {
       navigate("/expenses");
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Expense not found"
+        title: t('messages.error'),
+        description: t('messages.updateError')
       });
     }
   }, [params.id, navigate]);
@@ -30,15 +32,15 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
     try {
       updateExpense(params.id, data);
       toast({
-        title: "Success",
-        description: "Expense updated successfully"
+        title: t('messages.updateSuccess'),
+        description: t('messages.updateSuccess')
       });
       navigate("/expenses");
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to update expense"
+        title: t('messages.error'),
+        description: t('messages.updateError')
       });
     }
   };
@@ -51,13 +53,13 @@ export default function EditExpensePage({ params }: { params: { id: string } }) 
     <div className="container mx-auto py-6 px-4">
       <Card>
         <CardHeader>
-          <CardTitle>Edit Expense</CardTitle>
+          <CardTitle>{t('form.update')}</CardTitle>
         </CardHeader>
         <CardContent>
           <ExpenseForm
             defaultValues={expense}
             onSubmit={handleSubmit}
-            submitLabel="Update Expense"
+            submitLabel={t('form.update')}
           />
         </CardContent>
       </Card>

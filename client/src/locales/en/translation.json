@@ -1,0 +1,41 @@
+{
+  "common": {
+    "expenses": "Expenses",
+    "addExpense": "Add Expense",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "search": "Search expenses...",
+    "actions": "Actions"
+  },
+  "form": {
+    "date": "Date",
+    "item": "Item",
+    "itemPlaceholder": "Enter item name",
+    "price": "Price",
+    "count": "Count",
+    "vendor": "Vendor (Optional)",
+    "vendorPlaceholder": "Enter vendor name (optional)",
+    "submit": "Submit",
+    "update": "Update Expense"
+  },
+  "table": {
+    "date": "Date",
+    "item": "Item",
+    "price": "Price",
+    "count": "Count",
+    "vendor": "Vendor",
+    "created": "Created",
+    "updated": "Updated"
+  },
+  "messages": {
+    "addSuccess": "Expense added successfully",
+    "updateSuccess": "Expense updated successfully",
+    "deleteSuccess": "Expense deleted successfully",
+    "publishSuccess": "Expenses published successfully",
+    "error": "Error",
+    "addError": "Failed to add expense",
+    "updateError": "Failed to update expense",
+    "deleteError": "Failed to delete expense",
+    "publishError": "Failed to publish expenses"
+  }
+}
