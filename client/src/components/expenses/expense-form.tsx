@@ -22,7 +22,7 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
       item: '',
       price: 0,
       count: 1,
-      vendor: ''
+      vendor: '' // Vendor can now be empty
     }
   });
 
@@ -113,9 +113,9 @@ export function ExpenseForm({ defaultValues, onSubmit, submitLabel }: ExpenseFor
           name="vendor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Vendor</FormLabel>
+              <FormLabel>Vendor (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Enter vendor name" {...field} />
+                <Input placeholder="Enter vendor name (optional)" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

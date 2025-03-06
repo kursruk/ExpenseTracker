@@ -6,7 +6,7 @@ export const expenseSchema = z.object({
   item: z.string().min(1, "Item name is required"),
   price: z.number().min(0, "Price must be positive"),
   count: z.number().int().min(1, "Count must be at least 1"),
-  vendor: z.string().min(1, "Vendor name is required")
+  vendor: z.string().optional() 
 });
 
 export const insertExpenseSchema = expenseSchema.omit({ id: true });

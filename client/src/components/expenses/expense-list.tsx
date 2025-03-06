@@ -100,7 +100,7 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
                   <TableCell>{expense.item}</TableCell>
                   <TableCell>${expense.price.toFixed(2)}</TableCell>
                   <TableCell>{expense.count}</TableCell>
-                  <TableCell>{expense.vendor}</TableCell>
+                  <TableCell>{expense.vendor || '-'}</TableCell>
                   <TableCell className="text-right">
                     <Link href={`/expenses/edit/${expense.id}`}>
                       <Button variant="ghost" size="icon" className="mr-2">
