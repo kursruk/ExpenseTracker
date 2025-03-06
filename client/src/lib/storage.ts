@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Expense, InsertExpense } from '@shared/schema';
+import { apiRequest } from './queryClient';
 
 const STORAGE_KEY = 'expenses';
 
@@ -20,7 +21,7 @@ export function updateExpense(id: string, expense: InsertExpense): Expense {
   const expenses = getExpenses();
   const index = expenses.findIndex(e => e.id === id);
   if (index === -1) throw new Error('Expense not found');
-  
+
   const updatedExpense = { ...expense, id };
   expenses[index] = updatedExpense;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
@@ -36,4 +37,15 @@ export function deleteExpense(id: string): void {
 export function getExpense(id: string): Expense | undefined {
   const expenses = getExpenses();
   return expenses.find(e => e.id === id);
+}
+
+export async function publishExpenses(): Promise<{ success: boolean, message: string }> {
+  const expenses = getExpenses();
+  try {
+    const response = await apiRequest('POST', '/api/expenses/publish', expenses);
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    throw new Error('Failed to publish expenses');
+  }
 }

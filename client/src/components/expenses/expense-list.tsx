@@ -12,7 +12,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Upload } from "lucide-react";
+import { publishExpenses } from "@/lib/storage";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -23,30 +25,43 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<keyof Expense>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [isPublishing, setIsPublishing] = useState(false);
+  const { toast } = useToast();
+
+  const handlePublish = async () => {
+    try {
+      setIsPublishing(true);
+      const result = await publishExpenses();
+      toast({
+        title: "Success",
+        description: result.message
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to publish expenses"
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   const filteredAndSortedExpenses = useMemo(() => {
     return expenses
       .filter(expense => 
         expense.item.toLowerCase().includes(search.toLowerCase()) ||
-        expense.vendor.toLowerCase().includes(search.toLowerCase())
+        (expense.vendor?.toLowerCase() || '').includes(search.toLowerCase())
       )
       .sort((a, b) => {
         const aValue = a[sortField];
         const bValue = b[sortField];
+        if (aValue === undefined || bValue === undefined) return 0;
         return sortDirection === "asc" 
           ? aValue > bValue ? 1 : -1
           : bValue > aValue ? 1 : -1;
       });
   }, [expenses, search, sortField, sortDirection]);
-
-  const handleSort = (field: keyof Expense) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString();
@@ -54,14 +69,24 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle>Expenses</CardTitle>
-        <Link href="/expenses/add">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Expense
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handlePublish}
+            disabled={isPublishing || expenses.length === 0}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            {isPublishing ? 'Publishing...' : 'Publish'}
           </Button>
-        </Link>
+          <Link href="/expenses/add">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Expense
+            </Button>
+          </Link>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="mb-4">
