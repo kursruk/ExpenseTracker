@@ -34,8 +34,8 @@ export function ExpenseForm({
       date: new Date().toISOString().split("T")[0],
       item: "",
       price: 0,
-      count: 1,
-      vendor: "", // Vendor can now be empty
+      count: 0.1, // Initialize with minimum valid value
+      vendor: "",
     },
   });
 
@@ -48,6 +48,17 @@ export function ExpenseForm({
         title: t("messages.error"),
         description: t("messages.addError"),
       });
+    }
+  };
+
+  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>, onChange: (value: number) => void) => {
+    const value = e.target.value;
+    const numberValue = parseFloat(value);
+
+    if (value === "") {
+      onChange(0);
+    } else if (!isNaN(numberValue)) {
+      onChange(numberValue);
     }
   };
 
@@ -90,9 +101,10 @@ export function ExpenseForm({
                 <Input
                   type="number"
                   step="0.01"
+                  min="0"
                   placeholder="0.00"
                   {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                  onChange={(e) => handleNumberInput(e, field.onChange)}
                 />
               </FormControl>
               <FormMessage />
@@ -108,10 +120,11 @@ export function ExpenseForm({
               <FormControl>
                 <Input
                   type="number"
-                  step="0.01"
-                  placeholder="0.00"
+                  step="0.1"
+                  min="0.1"
+                  placeholder="0.1"
                   {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                  onChange={(e) => handleNumberInput(e, field.onChange)}
                 />
               </FormControl>
               <FormMessage />
@@ -132,9 +145,8 @@ export function ExpenseForm({
           )}
         />
         <Button type="submit" className="w-full">
-          {t("form.submit")}
-        </Button>{" "}
-        {/* Added translation for submit button */}
+          {submitLabel}
+        </Button>
       </form>
     </Form>
   );
