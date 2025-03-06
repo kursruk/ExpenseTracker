@@ -4,13 +4,13 @@ import { Expense } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Pencil, Trash2, Plus, Upload } from "lucide-react";
 import { publishExpenses } from "@/lib/storage";
@@ -49,7 +49,7 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
 
   const filteredAndSortedExpenses = useMemo(() => {
     return expenses
-      .filter(expense => 
+      .filter(expense =>
         expense.item.toLowerCase().includes(search.toLowerCase()) ||
         (expense.vendor?.toLowerCase() || '').includes(search.toLowerCase())
       )
@@ -57,7 +57,7 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
         const aValue = a[sortField];
         const bValue = b[sortField];
         if (aValue === undefined || bValue === undefined) return 0;
-        return sortDirection === "asc" 
+        return sortDirection === "asc"
           ? aValue > bValue ? 1 : -1
           : bValue > aValue ? 1 : -1;
       });
@@ -65,6 +65,19 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString();
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString();
+  };
+
+  const handleSort = (field: keyof Expense) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
   return (
@@ -115,6 +128,12 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
                 <TableHead onClick={() => handleSort("vendor")} className="cursor-pointer">
                   Vendor {sortField === "vendor" && (sortDirection === "asc" ? "↑" : "↓")}
                 </TableHead>
+                <TableHead onClick={() => handleSort("createdAt")} className="cursor-pointer">
+                  Created {sortField === "createdAt" && (sortDirection === "asc" ? "↑" : "↓")}
+                </TableHead>
+                <TableHead onClick={() => handleSort("updatedAt")} className="cursor-pointer">
+                  Updated {sortField === "updatedAt" && (sortDirection === "asc" ? "↑" : "↓")}
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -126,6 +145,8 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
                   <TableCell>${expense.price.toFixed(2)}</TableCell>
                   <TableCell>{expense.count}</TableCell>
                   <TableCell>{expense.vendor || '-'}</TableCell>
+                  <TableCell>{formatDateTime(expense.createdAt)}</TableCell>
+                  <TableCell>{formatDateTime(expense.updatedAt)}</TableCell>
                   <TableCell className="text-right">
                     <Link href={`/expenses/edit/${expense.id}`}>
                       <Button variant="ghost" size="icon" className="mr-2">

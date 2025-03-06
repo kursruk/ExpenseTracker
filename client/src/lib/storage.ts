@@ -11,7 +11,13 @@ export function getExpenses(): Expense[] {
 
 export function addExpense(expense: InsertExpense): Expense {
   const expenses = getExpenses();
-  const newExpense = { ...expense, id: uuidv4() };
+  const now = new Date().toISOString();
+  const newExpense: Expense = {
+    ...expense,
+    id: uuidv4(),
+    createdAt: now,
+    updatedAt: now
+  };
   expenses.push(newExpense);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
   return newExpense;
@@ -22,7 +28,13 @@ export function updateExpense(id: string, expense: InsertExpense): Expense {
   const index = expenses.findIndex(e => e.id === id);
   if (index === -1) throw new Error('Expense not found');
 
-  const updatedExpense = { ...expense, id };
+  const existingExpense = expenses[index];
+  const updatedExpense: Expense = {
+    ...expense,
+    id,
+    createdAt: existingExpense.createdAt,
+    updatedAt: new Date().toISOString()
+  };
   expenses[index] = updatedExpense;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
   return updatedExpense;
