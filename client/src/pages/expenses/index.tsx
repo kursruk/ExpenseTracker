@@ -20,34 +20,31 @@ export default function ExpensesPage() {
   const [expandedMonths, setExpandedMonths] = useState<MonthData[]>(() => {
     const availableMonths = getAvailableMonths();
     // Get both expanded states - from save operation and current month
-    const expandedMonth = localStorage.getItem('expanded_month');
     const currentMonth = localStorage.getItem('current_month');
 
     return availableMonths.map(({ year, month }) => ({
       year,
       month,
-      expanded: expandedMonth === `${year}-${month}` || currentMonth === `${year}-${month}`,
-      checks: (expandedMonth === `${year}-${month}` || currentMonth === `${year}-${month}`) 
-        ? getChecks(year, month) 
-        : [],
+      expanded: currentMonth === `${year}-${month}`,
+      checks: currentMonth === `${year}-${month}` ? getChecks(year, month) : [],
       total: getMonthTotal(year, month)
     }));
   });
 
-  // Only clear the expanded_month, keep current_month
-  useEffect(() => {
-    if (localStorage.getItem('expanded_month')) {
-      localStorage.removeItem('expanded_month');
-    }
-  }, []);
-
   const toggleMonth = (year: number, month: number) => {
     setExpandedMonths(prev => prev.map(m => {
       if (m.year === year && m.month === month) {
+        const newExpanded = !m.expanded;
+        // Update localStorage when manually toggling
+        if (newExpanded) {
+          localStorage.setItem('current_month', `${year}-${month}`);
+        } else {
+          localStorage.removeItem('current_month');
+        }
         return {
           ...m,
-          expanded: !m.expanded,
-          checks: !m.expanded ? getChecks(year, month) : m.checks,
+          expanded: newExpanded,
+          checks: newExpanded ? getChecks(year, month) : m.checks,
           total: getMonthTotal(year, month)
         };
       }
