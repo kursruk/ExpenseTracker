@@ -6,6 +6,7 @@ import { Plus, ChevronRight, ChevronDown } from "lucide-react";
 import { getAvailableMonths, getChecks, getMonthTotal } from "@/lib/storage";
 import { CheckList } from "@/components/expenses/check-list";
 import type { Check } from "@shared/schema";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface MonthData {
   year: number;
@@ -17,6 +18,7 @@ interface MonthData {
 
 export default function ExpensesPage() {
   const [, navigate] = useLocation();
+  const { format } = useCurrency();
   const [expandedMonths, setExpandedMonths] = useState<MonthData[]>(() => {
     const availableMonths = getAvailableMonths();
     // Get both expanded states - from save operation and current month
@@ -80,7 +82,7 @@ export default function ExpensesPage() {
                 >
                   {expanded ? <ChevronDown className="mr-2 h-4 w-4" /> : <ChevronRight className="mr-2 h-4 w-4" />}
                   <span className="flex-1 text-left">{formatMonth(year, month)}</span>
-                  <span className="text-muted-foreground">${total.toFixed(2)}</span>
+                  <span className="text-muted-foreground">{format(total)}</span>
                 </Button>
 
                 {expanded && checks.length > 0 && (

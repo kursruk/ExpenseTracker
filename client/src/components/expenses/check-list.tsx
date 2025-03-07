@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Check } from "@shared/schema";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface CheckListProps {
   checks: Check[];
@@ -17,6 +18,7 @@ interface CheckListProps {
 
 export function CheckList({ checks, year, month }: CheckListProps) {
   const [, navigate] = useLocation();
+  const { format } = useCurrency();
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString();
@@ -53,7 +55,7 @@ export function CheckList({ checks, year, month }: CheckListProps) {
               </TableCell>
               <TableCell>{check.shopName}</TableCell>
               <TableCell className="text-right">
-                ${check.total.toFixed(2)}
+                {format(check.total)}
               </TableCell>
             </TableRow>
           ))}
