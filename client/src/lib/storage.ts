@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Check, CheckItem, InsertCheck, InsertCheckItem, Shop } from '@shared/schema';
 import { useSettingsStore } from '@/lib/settings';
+import { syncService } from './sync-service';
 
 // Storage keys
 const SHOPS_KEY = 'shops';
@@ -49,6 +50,14 @@ export function addCheck(year: number, month: number, check: InsertCheck): Check
 
   checks.push(newCheck);
   localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
+
+  // Queue sync update
+  syncService.addUpdate({
+    type: 'check',
+    action: 'create',
+    data: newCheck
+  });
+
   return newCheck;
 }
 
@@ -66,14 +75,23 @@ export function updateCheck(year: number, month: number, checkId: string, items:
 
   const total = updatedItems.reduce((sum, item) => sum + item.total, 0);
 
-  checks[checkIndex] = {
+  const updatedCheck: Check = {
     ...checks[checkIndex],
     items: updatedItems,
     total
   };
 
+  checks[checkIndex] = updatedCheck;
   localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
-  return checks[checkIndex];
+
+  // Queue sync update
+  syncService.addUpdate({
+    type: 'check',
+    action: 'update',
+    data: updatedCheck
+  });
+
+  return updatedCheck;
 }
 
 export function getCheck(year: number, month: number, checkId: string): Check | undefined {

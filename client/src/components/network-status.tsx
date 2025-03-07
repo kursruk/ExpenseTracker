@@ -1,9 +1,21 @@
-import { Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff, Cloud, CloudOff } from "lucide-react";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 import { cn } from "@/lib/utils";
+import { syncService } from "@/lib/sync-service";
+import { useState, useEffect } from "react";
 
 export function NetworkStatus() {
   const { isOnline, lastSync } = useNetworkStatus();
+  const [pendingUpdates, setPendingUpdates] = useState(0);
+
+  useEffect(() => {
+    // Update pending updates count every second
+    const interval = setInterval(() => {
+      setPendingUpdates(syncService.getPendingUpdatesCount());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="fixed bottom-4 right-4 flex items-center gap-2 rounded-full bg-background/80 backdrop-blur-sm border px-3 py-2 shadow-lg">
@@ -22,6 +34,12 @@ export function NetworkStatus() {
         <span className="text-xs text-muted-foreground ml-2">
           Last sync: {lastSync.toLocaleTimeString()}
         </span>
+      )}
+      {pendingUpdates > 0 && (
+        <div className="flex items-center gap-1 ml-2 text-yellow-500">
+          <Cloud className="h-4 w-4" />
+          <span className="text-xs">{pendingUpdates} pending</span>
+        </div>
       )}
     </div>
   );
