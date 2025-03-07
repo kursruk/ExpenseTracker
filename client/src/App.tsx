@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import ExpensesPage from "@/pages/expenses";
 import CheckView from "@/pages/expenses/[year]/[month]/[id]";
+import AddCheckPage from "@/pages/expenses/add";
 import SettingsPage from "@/pages/settings";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ function Router() {
       <Switch>
         <Route path="/" component={ExpensesPage} />
         <Route path="/expenses" component={ExpensesPage} />
+        <Route path="/expenses/add" component={AddCheckPage} />
         <Route path="/expenses/:year/:month/:id" component={CheckView} />
         <Route path="/settings" component={SettingsPage} />
         <Route component={NotFound} />

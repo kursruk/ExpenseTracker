@@ -1,29 +1,80 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
-import { ExpenseForm } from "@/components/expenses/expense-form";
-import { addExpense } from "@/lib/storage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { InsertExpense } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { addCheck, getShops, addShop } from "@/lib/storage";
+import type { InsertCheck, Shop } from "@shared/schema";
 
-export default function AddExpensePage() {
+export default function AddCheckPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [selectedShop, setSelectedShop] = useState<string>("");
+  const [newShopName, setNewShopName] = useState("");
 
-  const handleSubmit = (data: InsertExpense) => {
-    try {
-      addExpense(data);
+  useEffect(() => {
+    setShops(getShops());
+  }, []);
+
+  const handleCreateShop = () => {
+    if (!newShopName.trim()) {
       toast({
-        title: t('messages.addSuccess'),
-        description: t('messages.addSuccess')
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a shop name"
       });
-      navigate("/expenses");
+      return;
+    }
+
+    try {
+      const newShop = addShop(newShopName.trim());
+      setShops([...shops, newShop]);
+      setSelectedShop(newShop.id);
+      setNewShopName("");
+      toast({
+        title: "Success",
+        description: "Shop created successfully"
+      });
     } catch (error) {
       toast({
         variant: "destructive",
-        title: t('messages.error'),
-        description: t('messages.addError')
+        title: "Error",
+        description: "Failed to create shop"
+      });
+    }
+  };
+
+  const handleCreateCheck = () => {
+    if (!selectedShop) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a shop"
+      });
+      return;
+    }
+
+    try {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+
+      const check: InsertCheck = {
+        date: today.toISOString().split('T')[0],
+        shopId: selectedShop,
+        items: []
+      };
+
+      const newCheck = addCheck(year, month, check);
+      navigate(`/expenses/${year}/${month}/${newCheck.id}`);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create check"
       });
     }
   };
@@ -32,10 +83,52 @@ export default function AddExpensePage() {
     <div className="container mx-auto py-6 px-4">
       <Card>
         <CardHeader>
-          <CardTitle>{t('common.addExpense')}</CardTitle>
+          <CardTitle>Add New Check</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ExpenseForm onSubmit={handleSubmit} submitLabel={t('form.submit')} />
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Shop</label>
+            <Select
+              value={selectedShop}
+              onValueChange={setSelectedShop}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a shop" />
+              </SelectTrigger>
+              <SelectContent>
+                {shops.map(shop => (
+                  <SelectItem key={shop.id} value={shop.id}>
+                    {shop.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Or Add New Shop</label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter shop name"
+                value={newShopName}
+                onChange={(e) => setNewShopName(e.target.value)}
+              />
+              <Button 
+                onClick={handleCreateShop}
+                disabled={!newShopName.trim()}
+              >
+                Add Shop
+              </Button>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleCreateCheck}
+            className="w-full"
+            disabled={!selectedShop}
+          >
+            Create Check
+          </Button>
         </CardContent>
       </Card>
     </div>
