@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, X } from "lucide-react";
 import { getCheck, updateCheck, getShops } from "@/lib/storage";
 import type { Check, CheckItem, InsertCheckItem, Shop } from "@shared/schema";
 
@@ -74,8 +74,10 @@ export default function CheckView({ params }: CheckViewProps) {
 
   const handleSaveAndReturn = () => {
     navigate(`/expenses`);
-    // Force expand the current month in the list
-    localStorage.setItem('expanded_month', `${year}-${month}`);
+  };
+
+  const handleCancel = () => {
+    navigate('/expenses');
   };
 
   if (!check) return null;
@@ -207,10 +209,16 @@ export default function CheckView({ params }: CheckViewProps) {
           <div className="text-lg font-semibold">
             Total: ${check.total.toFixed(2)}
           </div>
-          <Button onClick={handleSaveAndReturn}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Check
-          </Button>
+          <div className="space-x-2">
+            <Button variant="outline" onClick={handleCancel}>
+              <X className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAndReturn}>
+              <Save className="mr-2 h-4 w-4" />
+              Save Check
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>
