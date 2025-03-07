@@ -127,10 +127,21 @@ export default function CheckView({ params }: CheckViewProps) {
                   value={item.count}
                   onChange={(e) => handleUpdateItem(index, { count: parseFloat(e.target.value) })}
                 />
-                <Input
+                <Select
                   value={item.unitOfMeasure}
-                  onChange={(e) => handleUpdateItem(index, { unitOfMeasure: e.target.value })}
-                />
+                  onValueChange={(value) => handleUpdateItem(index, { unitOfMeasure: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pcs">pcs</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                    <SelectItem value="g">g</SelectItem>
+                    <SelectItem value="l">l</SelectItem>
+                    <SelectItem value="ml">ml</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ))}
 
@@ -153,11 +164,21 @@ export default function CheckView({ params }: CheckViewProps) {
                 value={newItem.count}
                 onChange={(e) => setNewItem({ ...newItem, count: parseFloat(e.target.value) })}
               />
-              <Input
-                placeholder="Unit"
+              <Select
                 value={newItem.unitOfMeasure}
-                onChange={(e) => setNewItem({ ...newItem, unitOfMeasure: e.target.value })}
-              />
+                onValueChange={(value) => setNewItem({ ...newItem, unitOfMeasure: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pcs">pcs</SelectItem>
+                  <SelectItem value="kg">kg</SelectItem>
+                  <SelectItem value="g">g</SelectItem>
+                  <SelectItem value="l">l</SelectItem>
+                  <SelectItem value="ml">ml</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Button onClick={handleAddItem} className="w-full">
