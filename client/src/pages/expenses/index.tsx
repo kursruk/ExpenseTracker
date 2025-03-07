@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronRight, ChevronDown } from "lucide-react";
-import { getAvailableMonths, getChecks } from "@/lib/storage";
+import { getAvailableMonths, getChecks, getMonthTotal } from "@/lib/storage";
 import { CheckList } from "@/components/expenses/check-list";
 import type { Check } from "@shared/schema";
 
@@ -12,6 +12,7 @@ interface MonthData {
   month: number;
   expanded: boolean;
   checks: Check[];
+  total: number;
 }
 
 export default function ExpensesPage() {
@@ -24,7 +25,8 @@ export default function ExpensesPage() {
       year,
       month,
       expanded: expandedMonth === `${year}-${month}`,
-      checks: expandedMonth === `${year}-${month}` ? getChecks(year, month) : []
+      checks: expandedMonth === `${year}-${month}` ? getChecks(year, month) : [],
+      total: getMonthTotal(year, month)
     }));
   });
 
@@ -39,7 +41,8 @@ export default function ExpensesPage() {
         return {
           ...m,
           expanded: !m.expanded,
-          checks: !m.expanded ? getChecks(year, month) : m.checks
+          checks: !m.expanded ? getChecks(year, month) : m.checks,
+          total: getMonthTotal(year, month)
         };
       }
       return m;
@@ -65,7 +68,7 @@ export default function ExpensesPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {expandedMonths.map(({ year, month, expanded, checks }) => (
+            {expandedMonths.map(({ year, month, expanded, checks, total }) => (
               <div key={`${year}-${month}`} className="space-y-2">
                 <Button
                   variant="ghost"
@@ -73,7 +76,8 @@ export default function ExpensesPage() {
                   onClick={() => toggleMonth(year, month)}
                 >
                   {expanded ? <ChevronDown className="mr-2 h-4 w-4" /> : <ChevronRight className="mr-2 h-4 w-4" />}
-                  {formatMonth(year, month)}
+                  <span className="flex-1 text-left">{formatMonth(year, month)}</span>
+                  <span className="text-muted-foreground">${total.toFixed(2)}</span>
                 </Button>
 
                 {expanded && checks.length > 0 && (

@@ -73,6 +73,12 @@ export default function CheckView({ params }: CheckViewProps) {
   };
 
   const handleSaveAndReturn = () => {
+    // If there's a new item with a product name, add it before saving
+    if (newItem.productName?.trim()) {
+      handleAddItem();
+    }
+    // Force expand the current month in the list
+    localStorage.setItem('expanded_month', `${year}-${month}`);
     navigate(`/expenses`);
   };
 
