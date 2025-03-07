@@ -25,12 +25,15 @@
     "count": "Количина",
     "vendor": "Добављач",
     "created": "Креирано",
-    "updated": "Ажурирано"
+    "updated": "Ажурирано",
+    "checkNumber": "Рачун бр."
   },
   "settings": {
     "title": "Подешавања",
     "language": "Језик",
     "selectLanguage": "Изаберите језик",
+    "currency": "Валута",
+    "selectCurrency": "Изаберите валуту",
     "username": "Корисничко име",
     "password": "Лозинка",
     "save": "Сачувај подешавања"

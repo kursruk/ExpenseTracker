@@ -25,12 +25,15 @@
     "count": "Количество",
     "vendor": "Поставщик",
     "created": "Создано",
-    "updated": "Обновлено"
+    "updated": "Обновлено",
+    "checkNumber": "Чек №"
   },
   "settings": {
     "title": "Настройки",
     "language": "Язык",
     "selectLanguage": "Выберите язык",
+    "currency": "Валюта",
+    "selectCurrency": "Выберите валюту",
     "username": "Имя пользователя",
     "password": "Пароль",
     "save": "Сохранить настройки"

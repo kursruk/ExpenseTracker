@@ -34,8 +34,8 @@ export function CheckList({ checks, year, month }: CheckListProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Day</TableHead>
             <TableHead>Check #</TableHead>
+            <TableHead>Day</TableHead>
             <TableHead>Shop</TableHead>
             <TableHead className="text-right">Total Amount</TableHead>
           </TableRow>
@@ -47,10 +47,10 @@ export function CheckList({ checks, year, month }: CheckListProps) {
               className="cursor-pointer hover:bg-muted"
               onClick={() => handleRowClick(check.id)}
             >
+              <TableCell>#{check.checkNumber}</TableCell>
               <TableCell>
                 {formatDate(check.date)}
               </TableCell>
-              <TableCell>#{check.checkNumber}</TableCell>
               <TableCell>{check.shopName}</TableCell>
               <TableCell className="text-right">
                 ${check.total.toFixed(2)}

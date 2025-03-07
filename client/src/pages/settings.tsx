@@ -5,7 +5,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSettingsStore } from "@/lib/settings";
+import { useSettingsStore, currencySymbols } from "@/lib/settings";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,6 +13,7 @@ interface SettingsForm {
   locale: string;
   username: string;
   password: string;
+  currency: string;
 }
 
 export default function SettingsPage() {
@@ -26,6 +27,7 @@ export default function SettingsPage() {
       locale: settings.locale,
       username: settings.username,
       password: settings.password,
+      currency: settings.currency,
     },
   });
 
@@ -36,7 +38,7 @@ export default function SettingsPage() {
       title: t('messages.settingsSaved'),
       description: t('messages.settingsUpdated')
     });
-    navigate("/expenses"); // Redirect to main page after saving
+    navigate("/expenses");
   };
 
   return (
@@ -72,6 +74,33 @@ export default function SettingsPage() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('settings.currency')}</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('settings.selectCurrency')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                        <SelectItem value="RUB">RUB (₽)</SelectItem>
+                        <SelectItem value="RSD">RSD (RSD)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="username"

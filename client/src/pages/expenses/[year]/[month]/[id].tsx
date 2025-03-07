@@ -24,10 +24,10 @@ export default function CheckView({ params }: CheckViewProps) {
   const [newItem, setNewItem] = useState<Partial<InsertCheckItem>>({
     productName: "",
     price: 0,
-    count: 0.1,
+    count: 1, // Changed default count to 1
     unitOfMeasure: "pcs"
   });
-  const [newItemTotal, setNewItemTotal] = useState(0); // Added state for new item total
+  const [newItemTotal, setNewItemTotal] = useState(0);
 
   const year = parseInt(params.year);
   const month = parseInt(params.month);
@@ -43,7 +43,6 @@ export default function CheckView({ params }: CheckViewProps) {
   }, [params.id]);
 
   useEffect(() => {
-    // Calculate total for new item whenever price or count changes
     setNewItemTotal((newItem.price || 0) * (newItem.count || 0));
   }, [newItem.price, newItem.count]);
 
@@ -57,7 +56,7 @@ export default function CheckView({ params }: CheckViewProps) {
     setNewItem({
       productName: "",
       price: 0,
-      count: 0.1,
+      count: 1, // Changed default count to 1
       unitOfMeasure: "pcs"
     });
     setNewItemTotal(0);
@@ -69,7 +68,6 @@ export default function CheckView({ params }: CheckViewProps) {
     const items = [...check.items];
     items[index] = { ...items[index], ...updates };
 
-    // Recalculate total for the item
     const updatedCheck = updateCheck(year, month, check.id, items.map(item => ({
       productName: item.productName,
       price: item.price,
@@ -80,17 +78,14 @@ export default function CheckView({ params }: CheckViewProps) {
   };
 
   const handleSaveAndReturn = () => {
-    // If there's a new item with a product name, add it before saving
     if (newItem.productName?.trim()) {
       handleAddItem();
     }
-    // Store current month to keep it expanded
     localStorage.setItem('current_month', `${year}-${month}`);
     navigate("/expenses");
   };
 
   const handleCancel = () => {
-    // Store current month to keep it expanded even on cancel
     localStorage.setItem('current_month', `${year}-${month}`);
     navigate('/expenses');
   };
@@ -149,12 +144,12 @@ export default function CheckView({ params }: CheckViewProps) {
                   value={item.price}
                   onChange={(e) => handleUpdateItem(index, { price: parseFloat(e.target.value) || 0 })}
                 />
-                <Input
+                <Input // Updated Input component for count
                   type="number"
-                  step="0.01"
-                  min="0.01"
+                  step="0.1" // Changed step to 0.1
+                  min="0.1" // Changed min to 0.1
                   value={item.count}
-                  onChange={(e) => handleUpdateItem(index, { count: parseFloat(e.target.value) || 0.01 })}
+                  onChange={(e) => handleUpdateItem(index, { count: parseFloat(e.target.value) || 1 })} // Changed default to 1
                 />
                 <Select
                   value={item.unitOfMeasure}
@@ -189,13 +184,13 @@ export default function CheckView({ params }: CheckViewProps) {
                 value={newItem.price}
                 onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
               />
-              <Input
+              <Input // Updated Input component for new item count
                 type="number"
-                step="0.01"
-                min="0.01"
+                step="0.1" // Changed step to 0.1
+                min="0.1" // Changed min to 0.1
                 placeholder="Count"
                 value={newItem.count}
-                onChange={(e) => setNewItem({ ...newItem, count: parseFloat(e.target.value) || 0.01 })}
+                onChange={(e) => setNewItem({ ...newItem, count: parseFloat(e.target.value) || 1 })} // Changed default to 1
               />
               <Select
                 value={newItem.unitOfMeasure}
@@ -214,7 +209,6 @@ export default function CheckView({ params }: CheckViewProps) {
               </Select>
             </div>
 
-            {/* Show calculated total for new item */}
             {(newItem.price || 0) > 0 && (newItem.count || 0) > 0 && (
               <div className="text-sm text-muted-foreground text-right">
                 New item total: ${newItemTotal.toFixed(2)}

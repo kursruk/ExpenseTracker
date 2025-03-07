@@ -25,12 +25,15 @@
     "count": "Count",
     "vendor": "Vendor",
     "created": "Created",
-    "updated": "Updated"
+    "updated": "Updated",
+    "checkNumber": "Check #"
   },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "selectLanguage": "Select language",
+    "currency": "Currency",
+    "selectCurrency": "Select currency",
     "username": "Username",
     "password": "Password",
     "save": "Save Settings"

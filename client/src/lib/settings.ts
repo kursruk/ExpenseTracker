@@ -5,6 +5,7 @@ interface Settings {
   locale: string;
   username: string;
   password: string;
+  currency: string;
 }
 
 interface SettingsStore extends Settings {
@@ -17,6 +18,7 @@ export const useSettingsStore = create<SettingsStore>()(
       locale: 'en',
       username: '',
       password: '',
+      currency: 'USD',
       updateSettings: (newSettings) => set((state) => ({ ...state, ...newSettings })),
     }),
     {
@@ -24,3 +26,10 @@ export const useSettingsStore = create<SettingsStore>()(
     }
   )
 );
+
+export const currencySymbols: Record<string, string> = {
+  USD: '$',
+  EUR: '€',
+  RUB: '₽',
+  RSD: 'RSD'
+};
