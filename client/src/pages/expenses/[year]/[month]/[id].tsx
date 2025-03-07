@@ -27,6 +27,7 @@ export default function CheckView({ params }: CheckViewProps) {
     count: 0.1,
     unitOfMeasure: "pcs"
   });
+  const [newItemTotal, setNewItemTotal] = useState(0); // Added state for new item total
 
   const year = parseInt(params.year);
   const month = parseInt(params.month);
@@ -41,6 +42,11 @@ export default function CheckView({ params }: CheckViewProps) {
     setShops(getShops());
   }, [params.id]);
 
+  useEffect(() => {
+    // Calculate total for new item whenever price or count changes
+    setNewItemTotal((newItem.price || 0) * (newItem.count || 0));
+  }, [newItem.price, newItem.count]);
+
   const handleAddItem = () => {
     if (!check || !newItem.productName) return;
 
@@ -54,6 +60,7 @@ export default function CheckView({ params }: CheckViewProps) {
       count: 0.1,
       unitOfMeasure: "pcs"
     });
+    setNewItemTotal(0);
   };
 
   const handleUpdateItem = (index: number, updates: Partial<InsertCheckItem>) => {
@@ -79,7 +86,7 @@ export default function CheckView({ params }: CheckViewProps) {
     }
     // Force expand the current month in the list
     localStorage.setItem('expanded_month', `${year}-${month}`);
-    navigate(`/expenses`);
+    navigate("/expenses");
   };
 
   const handleCancel = () => {
@@ -205,6 +212,13 @@ export default function CheckView({ params }: CheckViewProps) {
               </Select>
             </div>
 
+            {/* Show calculated total for new item */}
+            {(newItem.price || 0) > 0 && (newItem.count || 0) > 0 && (
+              <div className="text-sm text-muted-foreground text-right">
+                New item total: ${newItemTotal.toFixed(2)}
+              </div>
+            )}
+
             <Button onClick={handleAddItem} className="w-full">
               <Plus className="mr-2 h-4 w-4" />
               Add Item
@@ -213,7 +227,7 @@ export default function CheckView({ params }: CheckViewProps) {
         </CardContent>
         <CardFooter className="flex justify-between">
           <div className="text-lg font-semibold">
-            Total: ${check.total.toFixed(2)}
+            Total: ${(check.total + newItemTotal).toFixed(2)}
           </div>
           <div className="space-x-2">
             <Button variant="outline" onClick={handleCancel}>
