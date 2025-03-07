@@ -26,18 +26,22 @@ export function CheckList({ checks, year, month }: CheckListProps) {
     navigate(`/expenses/${year}/${month}/${checkId}`);
   };
 
+  // Sort checks by check number in descending order
+  const sortedChecks = [...checks].sort((a, b) => b.checkNumber - a.checkNumber);
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Day</TableHead>
+            <TableHead>Check #</TableHead>
             <TableHead>Shop</TableHead>
             <TableHead className="text-right">Total Amount</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {checks.map((check) => (
+          {sortedChecks.map((check) => (
             <TableRow
               key={check.id}
               className="cursor-pointer hover:bg-muted"
@@ -46,6 +50,7 @@ export function CheckList({ checks, year, month }: CheckListProps) {
               <TableCell>
                 {formatDate(check.date)}
               </TableCell>
+              <TableCell>#{check.checkNumber}</TableCell>
               <TableCell>{check.shopName}</TableCell>
               <TableCell className="text-right">
                 ${check.total.toFixed(2)}
