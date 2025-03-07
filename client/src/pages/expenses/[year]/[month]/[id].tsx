@@ -24,7 +24,7 @@ export default function CheckView({ params }: CheckViewProps) {
   const [newItem, setNewItem] = useState<Partial<InsertCheckItem>>({
     productName: "",
     price: 0,
-    count: 1,
+    count: 0.1,
     unitOfMeasure: "pcs"
   });
 
@@ -51,7 +51,7 @@ export default function CheckView({ params }: CheckViewProps) {
     setNewItem({
       productName: "",
       price: 0,
-      count: 1,
+      count: 0.1,
       unitOfMeasure: "pcs"
     });
   };
@@ -61,6 +61,8 @@ export default function CheckView({ params }: CheckViewProps) {
 
     const items = [...check.items];
     items[index] = { ...items[index], ...updates };
+
+    // Recalculate total for the item
     const updatedCheck = updateCheck(year, month, check.id, items.map(item => ({
       productName: item.productName,
       price: item.price,
@@ -68,6 +70,12 @@ export default function CheckView({ params }: CheckViewProps) {
       unitOfMeasure: item.unitOfMeasure
     })));
     setCheck(updatedCheck);
+  };
+
+  const handleSaveAndReturn = () => {
+    navigate(`/expenses`);
+    // Force expand the current month in the list
+    localStorage.setItem('expanded_month', `${year}-${month}`);
   };
 
   if (!check) return null;
@@ -119,13 +127,17 @@ export default function CheckView({ params }: CheckViewProps) {
                 />
                 <Input
                   type="number"
+                  step="0.01"
+                  min="0"
                   value={item.price}
-                  onChange={(e) => handleUpdateItem(index, { price: parseFloat(e.target.value) })}
+                  onChange={(e) => handleUpdateItem(index, { price: parseFloat(e.target.value) || 0 })}
                 />
                 <Input
                   type="number"
+                  step="0.01"
+                  min="0.01"
                   value={item.count}
-                  onChange={(e) => handleUpdateItem(index, { count: parseFloat(e.target.value) })}
+                  onChange={(e) => handleUpdateItem(index, { count: parseFloat(e.target.value) || 0.01 })}
                 />
                 <Select
                   value={item.unitOfMeasure}
@@ -154,15 +166,19 @@ export default function CheckView({ params }: CheckViewProps) {
               />
               <Input
                 type="number"
+                step="0.01"
+                min="0"
                 placeholder="Price"
                 value={newItem.price}
-                onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) })}
+                onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
               />
               <Input
                 type="number"
+                step="0.01"
+                min="0.01"
                 placeholder="Count"
                 value={newItem.count}
-                onChange={(e) => setNewItem({ ...newItem, count: parseFloat(e.target.value) })}
+                onChange={(e) => setNewItem({ ...newItem, count: parseFloat(e.target.value) || 0.01 })}
               />
               <Select
                 value={newItem.unitOfMeasure}
@@ -191,7 +207,7 @@ export default function CheckView({ params }: CheckViewProps) {
           <div className="text-lg font-semibold">
             Total: ${check.total.toFixed(2)}
           </div>
-          <Button onClick={() => navigate("/expenses")}>
+          <Button onClick={handleSaveAndReturn}>
             <Save className="mr-2 h-4 w-4" />
             Save Check
           </Button>

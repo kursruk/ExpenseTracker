@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,13 +18,20 @@ export default function ExpensesPage() {
   const [, navigate] = useLocation();
   const [expandedMonths, setExpandedMonths] = useState<MonthData[]>(() => {
     const availableMonths = getAvailableMonths();
+    const expandedMonth = localStorage.getItem('expanded_month');
+
     return availableMonths.map(({ year, month }) => ({
       year,
       month,
-      expanded: false,
-      checks: []
+      expanded: expandedMonth === `${year}-${month}`,
+      checks: expandedMonth === `${year}-${month}` ? getChecks(year, month) : []
     }));
   });
+
+  // Clear the expanded month from localStorage after it's used
+  useEffect(() => {
+    localStorage.removeItem('expanded_month');
+  }, []);
 
   const toggleMonth = (year: number, month: number) => {
     setExpandedMonths(prev => prev.map(m => {
