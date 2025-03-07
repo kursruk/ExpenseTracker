@@ -4,8 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import ExpensesPage from "@/pages/expenses";
-import AddExpensePage from "@/pages/expenses/add";
-import EditExpensePage from "@/pages/expenses/edit/[id]";
+import CheckView from "@/pages/expenses/[year]/[month]/[id]";
 import SettingsPage from "@/pages/settings";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,8 +30,7 @@ function Router() {
       <Switch>
         <Route path="/" component={ExpensesPage} />
         <Route path="/expenses" component={ExpensesPage} />
-        <Route path="/expenses/add" component={AddExpensePage} />
-        <Route path="/expenses/edit/:id" component={EditExpensePage} />
+        <Route path="/expenses/:year/:month/:id" component={CheckView} />
         <Route path="/settings" component={SettingsPage} />
         <Route component={NotFound} />
       </Switch>

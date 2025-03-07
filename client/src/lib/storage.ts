@@ -1,59 +1,119 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Expense, InsertExpense } from '@shared/schema';
-import { apiRequest } from './queryClient';
-import { useSettingsStore } from './settings';
+import { Check, CheckItem, InsertCheck, InsertCheckItem, Shop } from '@shared/schema';
+import { useSettingsStore } from '@/lib/settings';
 
-const STORAGE_KEY = 'expenses';
+// Storage keys
+const SHOPS_KEY = 'shops';
+const getMonthKey = (year: number, month: number) => 
+  `expenses_${year}_${String(month + 1).padStart(2, '0')}`;
 
-export function getExpenses(): Expense[] {
-  const data = localStorage.getItem(STORAGE_KEY);
+// Shop management
+export function getShops(): Shop[] {
+  const data = localStorage.getItem(SHOPS_KEY);
   return data ? JSON.parse(data) : [];
 }
 
-export function addExpense(expense: InsertExpense): Expense {
-  const expenses = getExpenses();
-  const now = new Date().toISOString();
-  const newExpense: Expense = {
-    ...expense,
+export function addShop(name: string): Shop {
+  const shops = getShops();
+  const newShop: Shop = {
     id: uuidv4(),
-    createdAt: now,
-    updatedAt: now
+    name
   };
-  expenses.push(newExpense);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-  return newExpense;
+  shops.push(newShop);
+  localStorage.setItem(SHOPS_KEY, JSON.stringify(shops));
+  return newShop;
 }
 
-export function updateExpense(id: string, expense: InsertExpense): Expense {
-  const expenses = getExpenses();
-  const index = expenses.findIndex(e => e.id === id);
-  if (index === -1) throw new Error('Expense not found');
+// Check management
+export function getChecks(year: number, month: number): Check[] {
+  const key = getMonthKey(year, month);
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : [];
+}
 
-  const existingExpense = expenses[index];
-  const updatedExpense: Expense = {
-    ...expense,
-    id,
-    createdAt: existingExpense.createdAt,
-    updatedAt: new Date().toISOString()
+export function addCheck(year: number, month: number, check: InsertCheck): Check {
+  const checks = getChecks(year, month);
+  const shops = getShops();
+  const shop = shops.find(s => s.id === check.shopId);
+
+  if (!shop) throw new Error('Shop not found');
+
+  const newCheck: Check = {
+    ...check,
+    id: uuidv4(),
+    checkNumber: checks.length + 1,
+    shopName: shop.name,
+    items: [],
+    total: 0
   };
-  expenses[index] = updatedExpense;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-  return updatedExpense;
+
+  checks.push(newCheck);
+  localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
+  return newCheck;
 }
 
-export function deleteExpense(id: string): void {
-  const expenses = getExpenses();
-  const filteredExpenses = expenses.filter(e => e.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredExpenses));
+export function updateCheck(year: number, month: number, checkId: string, items: InsertCheckItem[]): Check {
+  const checks = getChecks(year, month);
+  const checkIndex = checks.findIndex(c => c.id === checkId);
+
+  if (checkIndex === -1) throw new Error('Check not found');
+
+  const updatedItems: CheckItem[] = items.map((item, index) => ({
+    ...item,
+    serialNumber: index + 1,
+    total: item.price * item.count
+  }));
+
+  const total = updatedItems.reduce((sum, item) => sum + item.total, 0);
+
+  checks[checkIndex] = {
+    ...checks[checkIndex],
+    items: updatedItems,
+    total
+  };
+
+  localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
+  return checks[checkIndex];
 }
 
-export function getExpense(id: string): Expense | undefined {
-  const expenses = getExpenses();
-  return expenses.find(e => e.id === id);
+export function getCheck(year: number, month: number, checkId: string): Check | undefined {
+  const checks = getChecks(year, month);
+  return checks.find(c => c.id === checkId);
+}
+
+// Get all available months
+export function getAvailableMonths(): { year: number; month: number }[] {
+  const months: { year: number; month: number }[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('expenses_')) {
+      const [, year, month] = key.split('_');
+      months.push({
+        year: parseInt(year),
+        month: parseInt(month) - 1
+      });
+    }
+  }
+
+  return months.sort((a, b) => {
+    return b.year - a.year || b.month - a.month;
+  });
+}
+
+export function getMonthTotal(year: number, month: number): number {
+  const checks = getChecks(year, month);
+  return checks.reduce((sum, check) => sum + check.total, 0);
 }
 
 export async function publishExpenses(): Promise<{ success: boolean, message: string }> {
-  const expenses = getExpenses();
+  const months = getAvailableMonths();
+  const allChecks: Check[] = [];
+
+  months.forEach(monthData => {
+    allChecks.push(...getChecks(monthData.year, monthData.month))
+  })
+
   const { username, password } = useSettingsStore.getState();
 
   try {
@@ -69,7 +129,7 @@ export async function publishExpenses(): Promise<{ success: boolean, message: st
     const response = await fetch('/api/expenses/publish', {
       method: 'POST',
       headers,
-      body: JSON.stringify(expenses)
+      body: JSON.stringify(allChecks)
     });
 
     if (!response.ok) {

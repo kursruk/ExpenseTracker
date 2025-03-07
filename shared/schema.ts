@@ -1,5 +1,44 @@
 import { z } from "zod";
 
+// Shop schema
+export const shopSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "Shop name is required"),
+});
+
+// Item in a check
+export const checkItemSchema = z.object({
+  serialNumber: z.number(),
+  productName: z.string().min(1, "Product name is required"),
+  price: z.number().min(0, "Price must be positive"),
+  count: z.number().min(0.01, "Count must be greater than 0"),
+  unitOfMeasure: z.string(),
+  total: z.number(),
+});
+
+// Check schema
+export const checkSchema = z.object({
+  id: z.string().uuid(),
+  checkNumber: z.number(),
+  date: z.string(),
+  shopId: z.string(),
+  shopName: z.string(),
+  items: z.array(checkItemSchema),
+  total: z.number(),
+});
+
+// Insert schemas (without auto-generated fields)
+export const insertCheckItemSchema = checkItemSchema.omit({ serialNumber: true, total: true });
+export const insertCheckSchema = checkSchema.omit({ id: true, checkNumber: true, total: true, shopName: true });
+
+// Export types
+export type Shop = z.infer<typeof shopSchema>;
+export type CheckItem = z.infer<typeof checkItemSchema>;
+export type Check = z.infer<typeof checkSchema>;
+export type InsertCheckItem = z.infer<typeof insertCheckItemSchema>;
+export type InsertCheck = z.infer<typeof insertCheckSchema>;
+
+
 export const expenseSchema = z.object({
   id: z.string().uuid(),
   date: z.string(),
