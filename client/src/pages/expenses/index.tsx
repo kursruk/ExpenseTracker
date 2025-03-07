@@ -19,19 +19,22 @@ export default function ExpensesPage() {
   const [, navigate] = useLocation();
   const [expandedMonths, setExpandedMonths] = useState<MonthData[]>(() => {
     const availableMonths = getAvailableMonths();
-    // Only expand the month if we're coming from a save operation
+    // Get both expanded states - from save operation and current month
     const expandedMonth = localStorage.getItem('expanded_month');
+    const currentMonth = localStorage.getItem('current_month');
 
     return availableMonths.map(({ year, month }) => ({
       year,
       month,
-      expanded: expandedMonth === `${year}-${month}`,
-      checks: expandedMonth === `${year}-${month}` ? getChecks(year, month) : [],
+      expanded: expandedMonth === `${year}-${month}` || currentMonth === `${year}-${month}`,
+      checks: (expandedMonth === `${year}-${month}` || currentMonth === `${year}-${month}`) 
+        ? getChecks(year, month) 
+        : [],
       total: getMonthTotal(year, month)
     }));
   });
 
-  // Clear the expanded month immediately after initialization
+  // Only clear the expanded_month, keep current_month
   useEffect(() => {
     if (localStorage.getItem('expanded_month')) {
       localStorage.removeItem('expanded_month');

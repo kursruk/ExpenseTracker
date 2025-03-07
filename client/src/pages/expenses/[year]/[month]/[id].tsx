@@ -84,12 +84,14 @@ export default function CheckView({ params }: CheckViewProps) {
     if (newItem.productName?.trim()) {
       handleAddItem();
     }
-    // Force expand the current month in the list, but only when saving
-    localStorage.setItem('expanded_month', `${year}-${month}`);
+    // Store current month to keep it expanded
+    localStorage.setItem('current_month', `${year}-${month}`);
     navigate("/expenses");
   };
 
   const handleCancel = () => {
+    // Store current month to keep it expanded even on cancel
+    localStorage.setItem('current_month', `${year}-${month}`);
     navigate('/expenses');
   };
 
