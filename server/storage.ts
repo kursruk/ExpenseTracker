@@ -49,7 +49,7 @@ export class SQLiteStorage implements IStorage {
 
     // Join checks with their items and shop information
     return Promise.all(result.map(async check => {
-      const shop = await db.select().from(shops).where(eq(shops.id, check.shopId)).first();
+      const [shop] = await db.select().from(shops).where(eq(shops.id, check.shopId));
       const checkItemsList = items
         .filter(item => item.checkId === check.id)
         .map(item => ({
@@ -57,7 +57,7 @@ export class SQLiteStorage implements IStorage {
           productName: item.productName,
           price: item.price,
           count: item.count,
-          unitOfMeasure: item.unitOfMeasure,
+          unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
           total: item.total
         }));
 
@@ -70,17 +70,17 @@ export class SQLiteStorage implements IStorage {
   }
 
   async getCheck(year: number, month: number, id: string): Promise<Check | undefined> {
-    const check = await db.select().from(checks).where(eq(checks.id, id)).first();
+    const [check] = await db.select().from(checks).where(eq(checks.id, id));
     if (!check) return undefined;
 
-    const shop = await db.select().from(shops).where(eq(shops.id, check.shopId)).first();
+    const [shop] = await db.select().from(shops).where(eq(shops.id, check.shopId));
     const items = await db.select().from(checkItems).where(eq(checkItems.checkId, id));
     const checkItems = items.map(item => ({
       serialNumber: item.serialNumber,
       productName: item.productName,
       price: item.price,
       count: item.count,
-      unitOfMeasure: item.unitOfMeasure,
+      unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
       total: item.total
     }));
 
@@ -92,7 +92,7 @@ export class SQLiteStorage implements IStorage {
   }
 
   async createCheck(year: number, month: number, insertCheck: InsertCheck): Promise<Check> {
-    const shop = await db.select().from(shops).where(eq(shops.id, insertCheck.shopId)).first();
+    const [shop] = await db.select().from(shops).where(eq(shops.id, insertCheck.shopId));
     if (!shop) throw new Error('Shop not found');
 
     // Get the latest check number for this month
@@ -144,7 +144,7 @@ export class SQLiteStorage implements IStorage {
         productName: item.productName,
         price: item.price,
         count: item.count,
-        unitOfMeasure: item.unitOfMeasure,
+        unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
         total: item.total
       }));
 
@@ -165,10 +165,10 @@ export class SQLiteStorage implements IStorage {
   }
 
   async updateCheck(year: number, month: number, checkId: string, items: CheckItem[]): Promise<Check> {
-    const check = await db.select().from(checks).where(eq(checks.id, checkId)).first();
+    const [check] = await db.select().from(checks).where(eq(checks.id, checkId));
     if (!check) throw new Error('Check not found');
 
-    const shop = await db.select().from(shops).where(eq(shops.id, check.shopId)).first();
+    const [shop] = await db.select().from(shops).where(eq(shops.id, check.shopId));
     if (!shop) throw new Error('Shop not found');
 
     // Delete existing items
@@ -199,7 +199,7 @@ export class SQLiteStorage implements IStorage {
       productName: item.productName,
       price: item.price,
       count: item.count,
-      unitOfMeasure: item.unitOfMeasure,
+      unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
       total: item.total
     }));
 
