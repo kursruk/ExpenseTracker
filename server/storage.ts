@@ -1,5 +1,5 @@
 import { db } from './db';
-import { shops, checks, checkItems } from './db/schema';
+import { shops, checks as checksTable, checkItems as itemsTable } from './db/schema';
 import { Check, CheckItem, InsertCheck, Shop } from '@shared/schema';
 import { eq, and, gte, lte, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -62,17 +62,17 @@ export class SQLiteStorage implements IStorage {
 
     try {
       const result = await db.select()
-        .from(checks)
+        .from(checksTable)
         .where(and(
-          gte(checks.date, startDate),
-          lte(checks.date, endDate)
+          gte(checksTable.date, startDate),
+          lte(checksTable.date, endDate)
         ));
 
       // Get all check items for these checks
       const checkIds = result.map(check => check.id);
       const items = await db.select()
-        .from(checkItems)
-        .where(inArray(checkItems.checkId, checkIds));
+        .from(itemsTable)
+        .where(inArray(itemsTable.checkId, checkIds));
 
       // Join checks with their items and shop information
       return Promise.all(result.map(async check => {
@@ -101,13 +101,13 @@ export class SQLiteStorage implements IStorage {
 
   async getCheck(year: number, month: number, id: string): Promise<Check | undefined> {
     try {
-      const [check] = await db.select().from(checks).where(eq(checks.id, id));
+      const [check] = await db.select().from(checksTable).where(eq(checksTable.id, id));
       if (!check) return undefined;
 
       const [shop] = await db.select().from(shops).where(eq(shops.id, check.shopId));
-      const checkItems = await db.select().from(checkItems).where(eq(checkItems.checkId, id));
+      const items = await db.select().from(itemsTable).where(eq(itemsTable.checkId, id));
 
-      const formattedItems = checkItems.map(item => ({
+      const formattedItems = items.map(item => ({
         serialNumber: item.serialNumber,
         productName: item.productName,
         price: item.price,
@@ -144,7 +144,7 @@ export class SQLiteStorage implements IStorage {
         total: 0
       };
 
-      await db.insert(checks).values(newCheck);
+      await db.insert(checksTable).values(newCheck);
 
       if (insertCheck.items.length > 0) {
         const itemsWithIds = insertCheck.items.map((item, index) => ({
@@ -158,11 +158,11 @@ export class SQLiteStorage implements IStorage {
           total: item.price * item.count
         }));
 
-        await db.insert(checkItems).values(itemsWithIds);
+        await db.insert(itemsTable).values(itemsWithIds);
         const total = itemsWithIds.reduce((sum, item) => sum + item.total, 0);
-        await db.update(checks)
+        await db.update(checksTable)
           .set({ total })
-          .where(eq(checks.id, checkId));
+          .where(eq(checksTable.id, checkId));
 
         const formattedItems = itemsWithIds.map(item => ({
           serialNumber: item.serialNumber,
@@ -198,10 +198,10 @@ export class SQLiteStorage implements IStorage {
 
     try {
       const existingChecks = await db.select()
-        .from(checks)
+        .from(checksTable)
         .where(and(
-          gte(checks.date, startDate),
-          lte(checks.date, endDate)
+          gte(checksTable.date, startDate),
+          lte(checksTable.date, endDate)
         ));
       return existingChecks.length + 1;
     } catch (error) {
@@ -211,7 +211,7 @@ export class SQLiteStorage implements IStorage {
 
   async updateCheck(year: number, month: number, checkId: string, items: CheckItem[]): Promise<Check> {
     try {
-      const [check] = await db.select().from(checks).where(eq(checks.id, checkId));
+      const [check] = await db.select().from(checksTable).where(eq(checksTable.id, checkId));
       if (!check) {
         throw new Error(`Check not found with ID: ${checkId}, SQL: SELECT * FROM checks WHERE id = '${checkId}'`);
       }
@@ -222,7 +222,7 @@ export class SQLiteStorage implements IStorage {
       }
 
       // Delete existing items
-      await db.delete(checkItems).where(eq(checkItems.checkId, checkId));
+      await db.delete(itemsTable).where(eq(itemsTable.checkId, checkId));
 
       // Insert new items
       const itemsWithIds = items.map((item, index) => ({
@@ -236,13 +236,13 @@ export class SQLiteStorage implements IStorage {
         total: item.price * item.count
       }));
 
-      await db.insert(checkItems).values(itemsWithIds);
+      await db.insert(itemsTable).values(itemsWithIds);
 
       // Update check total
       const total = itemsWithIds.reduce((sum, item) => sum + item.total, 0);
-      await db.update(checks)
+      await db.update(checksTable)
         .set({ total })
-        .where(eq(checks.id, checkId));
+        .where(eq(checksTable.id, checkId));
 
       const formattedItems = itemsWithIds.map(item => ({
         serialNumber: item.serialNumber,
