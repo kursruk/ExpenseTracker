@@ -105,8 +105,9 @@ export class SQLiteStorage implements IStorage {
       if (!check) return undefined;
 
       const [shop] = await db.select().from(shops).where(eq(shops.id, check.shopId));
-      const items = await db.select().from(checkItems).where(eq(checkItems.checkId, id));
-      const checkItems = items.map(item => ({
+      const checkItems = await db.select().from(checkItems).where(eq(checkItems.checkId, id));
+
+      const formattedItems = checkItems.map(item => ({
         serialNumber: item.serialNumber,
         productName: item.productName,
         price: item.price,
@@ -118,7 +119,7 @@ export class SQLiteStorage implements IStorage {
       return {
         ...check,
         shopName: shop?.name || '',
-        items: checkItems
+        items: formattedItems
       };
     } catch (error) {
       throw new Error(`Failed to get check: ${error.message}, SQL: SELECT * FROM checks WHERE id = '${id}'`);
