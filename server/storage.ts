@@ -7,7 +7,9 @@ import { v4 as uuidv4 } from 'uuid';
 export interface IStorage {
   // Shop operations
   getShops(): Promise<Shop[]>;
+  getShopById(id: string): Promise<Shop | undefined>;
   createShop(name: string): Promise<Shop>;
+  createOrUpdateShop(shop: Shop): Promise<Shop>;
 
   // Check operations
   getChecks(year: number, month: number): Promise<Check[]>;
@@ -25,16 +27,32 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
-  async createShop(name: string): Promise<Shop> {
+  async getShopById(id: string): Promise<Shop | undefined> {
     try {
-      const shop: Shop = {
-        id: uuidv4(),
-        name
-      };
-      await db.insert(shops).values(shop);
+      const [shop] = await db.select().from(shops).where(eq(shops.id, id));
       return shop;
     } catch (error) {
-      throw new Error(`Failed to create shop: ${error.message}, SQL: INSERT INTO shops (id, name) VALUES ('${uuidv4()}', '${name}')`);
+      throw new Error(`Failed to get shop: ${error.message}, SQL: SELECT * FROM shops WHERE id = '${id}'`);
+    }
+  }
+
+  async createOrUpdateShop(shop: Shop): Promise<Shop> {
+    try {
+      const existing = await this.getShopById(shop.id);
+
+      if (existing) {
+        // Update existing shop
+        await db.update(shops)
+          .set({ name: shop.name })
+          .where(eq(shops.id, shop.id));
+        return shop;
+      } else {
+        // Create new shop
+        await db.insert(shops).values(shop);
+        return shop;
+      }
+    } catch (error) {
+      throw new Error(`Failed to create/update shop: ${error.message}, SQL: INSERT/UPDATE shops WHERE id = '${shop.id}'`);
     }
   }
 

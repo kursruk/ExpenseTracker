@@ -50,11 +50,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           if (type === 'shop') {
             const shopData = data as Shop;
-            switch (action) {
-              case 'create':
-                await storage.createShop(shopData.name);
-                break;
-            }
+            // Always use createOrUpdateShop for shop sync
+            await storage.createOrUpdateShop(shopData);
           } else if (type === 'check') {
             const checkData = data as Check;
             const date = new Date(checkData.date);
