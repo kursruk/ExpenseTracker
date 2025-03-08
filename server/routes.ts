@@ -66,10 +66,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const year = date.getFullYear();
           const month = date.getMonth();
 
-          // Verify shop exists
-          const shop = await storage.getShopById(checkData.shopId);
+          // Verify shop exists or create it
+          let shop = await storage.getShopById(checkData.shopId);
           if (!shop) {
-            throw new Error(`Shop not found with ID: ${checkData.shopId}`);
+            // If shop doesn't exist, create it from the check data
+            shop = await storage.createOrUpdateShop({
+              id: checkData.shopId,
+              name: checkData.shopName // Assumed that shopName is available in checkData
+            });
           }
 
           // First try to get the check
