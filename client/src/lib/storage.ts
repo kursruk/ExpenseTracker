@@ -22,6 +22,14 @@ export function addShop(name: string): Shop {
   };
   shops.push(newShop);
   localStorage.setItem(SHOPS_KEY, JSON.stringify(shops));
+
+  // Queue sync update for shop
+  syncService.addUpdate({
+    type: 'shop',
+    action: 'create',
+    data: newShop
+  });
+
   return newShop;
 }
 
@@ -61,7 +69,7 @@ export function addCheck(year: number, month: number, check: InsertCheck): Check
   return newCheck;
 }
 
-export function updateCheck(year: number, month: number, checkId: string, items: InsertCheckItem[]): Check {
+export function updateCheck(year: number, month: number, checkId: string, items: CheckItem[]): Check {
   const checks = getChecks(year, month);
   const checkIndex = checks.findIndex(c => c.id === checkId);
 

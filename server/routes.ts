@@ -1,12 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { Check } from "@shared/schema";
+import { Check, Shop } from "@shared/schema";
 
 interface SyncUpdate {
-  type: 'check';
+  type: 'shop' | 'check';
   action: 'create' | 'update' | 'delete';
-  data: Check;
+  data: Shop | Check;
   timestamp: string;
 }
 
@@ -44,25 +44,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const update of updates) {
         const { type, action, data } = update;
 
-        if (type === 'check') {
-          const date = new Date(data.date);
+        if (type === 'shop') {
+          const shopData = data as Shop;
+          switch (action) {
+            case 'create':
+              await storage.createShop(shopData.name);
+              break;
+          }
+        } else if (type === 'check') {
+          const checkData = data as Check;
+          const date = new Date(checkData.date);
           const year = date.getFullYear();
           const month = date.getMonth();
 
           switch (action) {
             case 'create':
               await storage.createCheck(year, month, {
-                date: data.date,
-                shopId: data.shopId,
-                items: data.items
+                date: checkData.date,
+                shopId: checkData.shopId,
+                items: checkData.items
               });
               break;
 
             case 'update':
-              await storage.updateCheck(year, month, data.id, data.items);
+              await storage.updateCheck(year, month, checkData.id, checkData.items);
               break;
-
-            // Delete operation would go here if needed
           }
         }
       }

@@ -1,11 +1,11 @@
 import { apiRequest } from "./queryClient";
-import { Check, Expense } from "@shared/schema";
+import { Check, Shop } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 interface SyncUpdate {
-  type: 'check';
+  type: 'shop' | 'check';
   action: 'create' | 'update' | 'delete';
-  data: Check;
+  data: Shop | Check;
   timestamp: string;
 }
 
@@ -66,20 +66,32 @@ class SyncService {
     this.syncInProgress = true;
 
     try {
-      const response = await apiRequest('POST', '/api/sync', this.updates);
-
-      if (response.ok) {
-        // Clear successfully synced updates
-        this.updates = [];
-        this.savePendingUpdates();
-
-        // Clear any existing retry timeout
-        if (this.retryTimeout) {
-          clearTimeout(this.retryTimeout);
-          this.retryTimeout = null;
+      // First, send all shop updates
+      const shopUpdates = this.updates.filter(update => update.type === 'shop');
+      if (shopUpdates.length > 0) {
+        const shopResponse = await apiRequest('POST', '/api/sync', shopUpdates);
+        if (!shopResponse.ok) {
+          throw new Error('Shop sync failed');
         }
-      } else {
-        throw new Error('Sync failed');
+      }
+
+      // Then, send all check updates
+      const checkUpdates = this.updates.filter(update => update.type === 'check');
+      if (checkUpdates.length > 0) {
+        const checkResponse = await apiRequest('POST', '/api/sync', checkUpdates);
+        if (!checkResponse.ok) {
+          throw new Error('Check sync failed');
+        }
+      }
+
+      // Clear successfully synced updates
+      this.updates = [];
+      this.savePendingUpdates();
+
+      // Clear any existing retry timeout
+      if (this.retryTimeout) {
+        clearTimeout(this.retryTimeout);
+        this.retryTimeout = null;
       }
     } catch (error) {
       console.error('Failed to sync updates:', error);
