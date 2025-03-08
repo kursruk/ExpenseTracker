@@ -71,7 +71,8 @@ class SyncService {
       if (shopUpdates.length > 0) {
         const shopResponse = await apiRequest('POST', '/api/sync', shopUpdates);
         if (!shopResponse.ok) {
-          throw new Error('Shop sync failed');
+          const error = await shopResponse.json();
+          throw new Error(`Shop sync failed: ${error.message || error.error || 'Unknown error'}`);
         }
       }
 
@@ -80,7 +81,8 @@ class SyncService {
       if (checkUpdates.length > 0) {
         const checkResponse = await apiRequest('POST', '/api/sync', checkUpdates);
         if (!checkResponse.ok) {
-          throw new Error('Check sync failed');
+          const error = await checkResponse.json();
+          throw new Error(`Check sync failed: ${error.message || error.error || 'Unknown error'}`);
         }
       }
 

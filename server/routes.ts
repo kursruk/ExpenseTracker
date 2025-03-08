@@ -30,7 +30,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ 
         success: false, 
-        message: 'Failed to publish expenses' 
+        message: 'Failed to publish expenses',
+        error: error.message
       });
     }
   });
@@ -39,37 +40,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/sync', async (req, res) => {
     try {
       const updates: SyncUpdate[] = req.body;
+      console.log('Processing sync updates:', updates);
 
       // Process each update in order
       for (const update of updates) {
         const { type, action, data } = update;
+        console.log(`Processing ${type} update:`, { action, data });
 
-        if (type === 'shop') {
-          const shopData = data as Shop;
-          switch (action) {
-            case 'create':
-              await storage.createShop(shopData.name);
-              break;
+        try {
+          if (type === 'shop') {
+            const shopData = data as Shop;
+            switch (action) {
+              case 'create':
+                await storage.createShop(shopData.name);
+                break;
+            }
+          } else if (type === 'check') {
+            const checkData = data as Check;
+            const date = new Date(checkData.date);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+
+            switch (action) {
+              case 'create':
+                await storage.createCheck(year, month, {
+                  date: checkData.date,
+                  shopId: checkData.shopId,
+                  items: checkData.items
+                });
+                break;
+
+              case 'update':
+                await storage.updateCheck(year, month, checkData.id, checkData.items);
+                break;
+            }
           }
-        } else if (type === 'check') {
-          const checkData = data as Check;
-          const date = new Date(checkData.date);
-          const year = date.getFullYear();
-          const month = date.getMonth();
-
-          switch (action) {
-            case 'create':
-              await storage.createCheck(year, month, {
-                date: checkData.date,
-                shopId: checkData.shopId,
-                items: checkData.items
-              });
-              break;
-
-            case 'update':
-              await storage.updateCheck(year, month, checkData.id, checkData.items);
-              break;
-          }
+        } catch (updateError) {
+          throw new Error(`Failed to process ${type} ${action}: ${updateError.message}`);
         }
       }
 
@@ -82,7 +89,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error processing sync updates:', error);
       res.status(500).json({ 
         success: false, 
-        message: 'Failed to synchronize updates' 
+        message: 'Failed to synchronize updates',
+        error: error.message,
+        details: error.stack
       });
     }
   });
