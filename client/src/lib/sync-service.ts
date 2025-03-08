@@ -1,6 +1,7 @@
 import { apiRequest } from "./queryClient";
 import { Check, Shop } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { getShops } from "./storage";
 
 interface SyncUpdate {
   type: 'shop' | 'check';
@@ -15,11 +16,14 @@ class SyncService {
   private syncInProgress: boolean = false;
   private retryTimeout: number | null = null;
   private maxRetries: number = 3;
+  private lastShopSync: number = 0;
+  private shopSyncInterval: number = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     window.addEventListener('online', () => {
       this.isOnline = true;
       this.processPendingUpdates();
+      this.syncShopsFromServer();
     });
 
     window.addEventListener('offline', () => {
@@ -28,6 +32,53 @@ class SyncService {
 
     // Try to load any pending updates from localStorage
     this.loadPendingUpdates();
+
+    // Start periodic shop sync
+    setInterval(() => {
+      if (this.isOnline) {
+        this.syncShopsFromServer();
+      }
+    }, this.shopSyncInterval);
+  }
+
+  private async syncShopsFromServer() {
+    if (!this.isOnline || Date.now() - this.lastShopSync < this.shopSyncInterval) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/shops');
+      if (!response.ok) {
+        throw new Error('Failed to fetch shops from server');
+      }
+
+      const { success, data: serverShops } = await response.json();
+      if (!success || !Array.isArray(serverShops)) {
+        throw new Error('Invalid server response');
+      }
+
+      // Get local shops
+      const localShops = getShops();
+      const localShopsMap = new Map(localShops.map(shop => [shop.id, shop]));
+
+      // Find new shops from server
+      const newShops = serverShops.filter(serverShop => 
+        !localShopsMap.has(serverShop.id)
+      );
+
+      // Add new shops to pending updates
+      for (const shop of newShops) {
+        this.addUpdate({
+          type: 'shop',
+          action: 'create',
+          data: shop
+        });
+      }
+
+      this.lastShopSync = Date.now();
+    } catch (error) {
+      console.error('Failed to sync shops from server:', error);
+    }
   }
 
   private loadPendingUpdates() {

@@ -34,6 +34,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/shops', async (req, res) => {
+    try {
+      const shops = await storage.getShops();
+      res.json({ success: true, data: shops });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to get shops',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Add endpoint to sync updates
   app.post('/api/sync', async (req, res) => {
     try {
