@@ -42,40 +42,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates: SyncUpdate[] = req.body;
       console.log('Processing sync updates:', updates);
 
-      // Process each update in order
-      for (const update of updates) {
-        const { type, action, data } = update;
-        console.log(`Processing ${type} update:`, { action, data });
+      // First process all shop updates
+      const shopUpdates = updates.filter(update => update.type === 'shop');
+      console.log('Processing shop updates:', shopUpdates);
 
+      for (const update of shopUpdates) {
+        const shopData = update.data as Shop;
         try {
-          if (type === 'shop') {
-            const shopData = data as Shop;
-            // Always use createOrUpdateShop for shop sync
-            await storage.createOrUpdateShop(shopData);
-          } else if (type === 'check') {
-            const checkData = data as Check;
-            const date = new Date(checkData.date);
-            const year = date.getFullYear();
-            const month = date.getMonth();
+          await storage.createOrUpdateShop(shopData);
+        } catch (error) {
+          throw new Error(`Failed to process shop ${update.action}: ${error.message}`);
+        }
+      }
 
-            // First try to get the check
-            const existingCheck = await storage.getCheck(year, month, checkData.id);
+      // Then process all check updates
+      const checkUpdates = updates.filter(update => update.type === 'check');
+      console.log('Processing check updates:', checkUpdates);
 
-            if (existingCheck) {
-              // Update existing check
-              await storage.updateCheck(year, month, checkData.id, checkData.items);
-            } else {
-              // Create new check
-              await storage.createCheck(year, month, {
-                id: checkData.id, // Pass the ID to maintain consistency
-                date: checkData.date,
-                shopId: checkData.shopId,
-                items: checkData.items
-              });
-            }
+      for (const update of checkUpdates) {
+        const checkData = update.data as Check;
+        try {
+          const date = new Date(checkData.date);
+          const year = date.getFullYear();
+          const month = date.getMonth();
+
+          // Verify shop exists
+          const shop = await storage.getShopById(checkData.shopId);
+          if (!shop) {
+            throw new Error(`Shop not found with ID: ${checkData.shopId}`);
           }
-        } catch (updateError) {
-          throw new Error(`Failed to process ${type} ${action}: ${updateError.message}`);
+
+          // First try to get the check
+          const existingCheck = await storage.getCheck(year, month, checkData.id);
+
+          if (existingCheck) {
+            // Update existing check
+            await storage.updateCheck(year, month, checkData.id, checkData.items);
+          } else {
+            // Create new check
+            await storage.createCheck(year, month, {
+              id: checkData.id, // Pass the ID to maintain consistency
+              date: checkData.date,
+              shopId: checkData.shopId,
+              items: checkData.items
+            });
+          }
+        } catch (error) {
+          throw new Error(`Failed to process check ${update.action}: ${error.message}`);
         }
       }
 
