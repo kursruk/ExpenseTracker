@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+
 import {
   Table,
   TableBody,
@@ -29,7 +30,9 @@ export function CheckList({ checks, year, month }: CheckListProps) {
   };
 
   // Sort checks by check number in descending order
-  const sortedChecks = [...checks].sort((a, b) => b.checkNumber - a.checkNumber);
+  const sortedChecks = [...checks].sort(
+    (a, b) => b.checkNumber - a.checkNumber,
+  );
 
   return (
     <div className="rounded-md border">
@@ -50,9 +53,7 @@ export function CheckList({ checks, year, month }: CheckListProps) {
               onClick={() => handleRowClick(check.id)}
             >
               <TableCell>#{check.checkNumber}</TableCell>
-              <TableCell>
-                {formatDate(check.date)}
-              </TableCell>
+              <TableCell>{formatDate(check.date)}</TableCell>
               <TableCell>{check.shopName}</TableCell>
               <TableCell className="text-right">
                 {format(check.total)}
