@@ -12,7 +12,7 @@ export interface IStorage {
   // Check operations
   getChecks(year: number, month: number): Promise<Check[]>;
   getCheck(year: number, month: number, id: string): Promise<Check | undefined>;
-  createCheck(year: number, month: number, check: InsertCheck): Promise<Check>;
+  createCheck(year: number, month: number, check: InsertCheck & { id?: string }): Promise<Check>;
   updateCheck(year: number, month: number, checkId: string, items: CheckItem[]): Promise<Check>;
 }
 
@@ -107,14 +107,14 @@ export class SQLiteStorage implements IStorage {
     }
   }
 
-  async createCheck(year: number, month: number, insertCheck: InsertCheck): Promise<Check> {
+  async createCheck(year: number, month: number, insertCheck: InsertCheck & { id?: string }): Promise<Check> {
     try {
       const [shop] = await db.select().from(shops).where(eq(shops.id, insertCheck.shopId));
       if (!shop) {
         throw new Error(`Shop not found with ID: ${insertCheck.shopId}, SQL: SELECT * FROM shops WHERE id = '${insertCheck.shopId}'`);
       }
 
-      const checkId = uuidv4();
+      const checkId = insertCheck.id || uuidv4();
       const checkNumber = await this.getNextCheckNumber(year, month);
 
       const newCheck = {
@@ -145,17 +145,19 @@ export class SQLiteStorage implements IStorage {
           .set({ total })
           .where(eq(checks.id, checkId));
 
+        const formattedItems = itemsWithIds.map(item => ({
+          serialNumber: item.serialNumber,
+          productName: item.productName,
+          price: item.price,
+          count: item.count,
+          unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
+          total: item.total
+        }));
+
         return {
           ...newCheck,
           shopName: shop.name,
-          items: itemsWithIds.map(item => ({
-            serialNumber: item.serialNumber,
-            productName: item.productName,
-            price: item.price,
-            count: item.count,
-            unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
-            total: item.total
-          })),
+          items: formattedItems,
           total
         };
       }
@@ -223,17 +225,19 @@ export class SQLiteStorage implements IStorage {
         .set({ total })
         .where(eq(checks.id, checkId));
 
+      const formattedItems = itemsWithIds.map(item => ({
+        serialNumber: item.serialNumber,
+        productName: item.productName,
+        price: item.price,
+        count: item.count,
+        unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
+        total: item.total
+      }));
+
       return {
         ...check,
         shopName: shop.name,
-        items: itemsWithIds.map(item => ({
-          serialNumber: item.serialNumber,
-          productName: item.productName,
-          price: item.price,
-          count: item.count,
-          unitOfMeasure: item.unitOfMeasure as "pcs" | "kg" | "g" | "l" | "ml",
-          total: item.total
-        })),
+        items: formattedItems,
         total
       };
     } catch (error) {

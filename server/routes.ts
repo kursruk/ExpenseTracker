@@ -61,18 +61,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const year = date.getFullYear();
             const month = date.getMonth();
 
-            switch (action) {
-              case 'create':
-                await storage.createCheck(year, month, {
-                  date: checkData.date,
-                  shopId: checkData.shopId,
-                  items: checkData.items
-                });
-                break;
+            // First try to get the check
+            const existingCheck = await storage.getCheck(year, month, checkData.id);
 
-              case 'update':
-                await storage.updateCheck(year, month, checkData.id, checkData.items);
-                break;
+            if (existingCheck) {
+              // Update existing check
+              await storage.updateCheck(year, month, checkData.id, checkData.items);
+            } else {
+              // Create new check
+              await storage.createCheck(year, month, {
+                id: checkData.id, // Pass the ID to maintain consistency
+                date: checkData.date,
+                shopId: checkData.shopId,
+                items: checkData.items
+              });
             }
           }
         } catch (updateError) {
