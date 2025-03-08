@@ -20,8 +20,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/expenses/publish', (req, res) => {
     try {
       const expenses = req.body;
-      // Here you would typically send the expenses to an external API
-      // For now, we'll just echo back the data
       res.json({ 
         success: true, 
         message: 'Expenses published successfully',
@@ -42,23 +40,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates: SyncUpdate[] = req.body;
       console.log('Processing sync updates:', updates);
 
-      // First process all shop updates
+      // First, gather all unique shops from both shop updates and check updates
       const shopUpdates = updates.filter(update => update.type === 'shop');
-      console.log('Processing shop updates:', shopUpdates);
+      const checkUpdates = updates.filter(update => update.type === 'check');
 
-      for (const update of shopUpdates) {
+      // Get unique shops from check updates
+      const shopsFromChecks = checkUpdates.map(update => {
+        const checkData = update.data as Check;
+        return {
+          id: checkData.shopId,
+          name: checkData.shopName
+        };
+      });
+
+      // Create a Map to store unique shops by ID
+      const uniqueShops = new Map<string, Shop>();
+
+      // Add shops from explicit shop updates
+      shopUpdates.forEach(update => {
         const shopData = update.data as Shop;
+        uniqueShops.set(shopData.id, shopData);
+      });
+
+      // Add shops from check data
+      shopsFromChecks.forEach(shop => {
+        if (!uniqueShops.has(shop.id)) {
+          uniqueShops.set(shop.id, shop);
+        }
+      });
+
+      // Process all unique shops first
+      console.log('Processing unique shops:', Array.from(uniqueShops.values()));
+      for (const shop of uniqueShops.values()) {
         try {
-          await storage.createOrUpdateShop(shopData);
+          await storage.createOrUpdateShop(shop);
         } catch (error) {
-          throw new Error(`Failed to process shop ${update.action}: ${error.message}`);
+          throw new Error(`Failed to process shop: ${error.message}`);
         }
       }
 
       // Then process all check updates
-      const checkUpdates = updates.filter(update => update.type === 'check');
       console.log('Processing check updates:', checkUpdates);
-
       for (const update of checkUpdates) {
         const checkData = update.data as Check;
         try {
@@ -66,26 +88,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const year = date.getFullYear();
           const month = date.getMonth();
 
-          // Verify shop exists or create it
-          let shop = await storage.getShopById(checkData.shopId);
-          if (!shop) {
-            // If shop doesn't exist, create it from the check data
-            shop = await storage.createOrUpdateShop({
-              id: checkData.shopId,
-              name: checkData.shopName // Assumed that shopName is available in checkData
-            });
-          }
-
-          // First try to get the check
+          // Now we can safely process the check since all shops are created
           const existingCheck = await storage.getCheck(year, month, checkData.id);
 
           if (existingCheck) {
-            // Update existing check
             await storage.updateCheck(year, month, checkData.id, checkData.items);
           } else {
-            // Create new check
             await storage.createCheck(year, month, {
-              id: checkData.id, // Pass the ID to maintain consistency
+              id: checkData.id,
               date: checkData.date,
               shopId: checkData.shopId,
               items: checkData.items
