@@ -105,6 +105,18 @@ class SyncService {
     }
   }
 
+  // Public method to manually trigger sync
+  async sync() {
+    if (!this.isOnline) {
+      throw new Error('Cannot sync while offline');
+    }
+
+    await Promise.all([
+      this.syncShopsFromServer(),
+      this.processPendingUpdates()
+    ]);
+  }
+
   private async processPendingUpdates(retryCount: number = 0) {
     if (this.updates.length === 0 || this.syncInProgress) return;
 
@@ -143,6 +155,7 @@ class SyncService {
           this.processPendingUpdates(retryCount + 1);
         }, retryDelay);
       }
+      throw error; // Re-throw to handle in UI
     } finally {
       this.syncInProgress = false;
     }
