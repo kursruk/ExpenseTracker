@@ -59,10 +59,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Protected routes
-  app.get('/api/ping', requireAuth, (req, res) => {
-    res.json({ status: 'ok' });
-  });
-
   app.get('/api/shops', requireAuth, async (req, res) => {
     try {
       const shops = await storage.getShops();
@@ -76,6 +72,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/shops', requireAuth, async (req, res) => {
+    try {
+      const shop = await storage.createOrUpdateShop(req.body);
+      res.json({ success: true, data: shop });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create shop',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get('/api/checks/:year/:month', requireAuth, async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const checks = await storage.getChecks(year, month);
+      res.json({ success: true, data: checks });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get checks',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get('/api/checks/:year/:month/:id', requireAuth, async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const check = await storage.getCheck(year, month, req.params.id);
+      if (!check) {
+        return res.status(404).json({
+          success: false,
+          message: 'Check not found'
+        });
+      }
+      res.json({ success: true, data: check });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get check',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post('/api/checks/:year/:month', requireAuth, async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const check = await storage.createCheck(year, month, req.body);
+      res.json({ success: true, data: check });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create check',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.put('/api/checks/:year/:month/:id', requireAuth, async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      const check = await storage.updateCheck(year, month, req.params.id, req.body.items);
+      res.json({ success: true, data: check });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update check',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get('/api/checks/months', requireAuth, async (req, res) => {
+    try {
+      // Get all available months from the checks table
+      const months = await storage.getAvailableMonths();
+      res.json({ success: true, data: months });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get available months',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Sync route
   app.post('/api/sync', requireAuth, async (req, res) => {
     try {
       const updates: SyncUpdate[] = req.body;
@@ -85,43 +175,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const shopUpdates = updates.filter(update => update.type === 'shop');
       const checkUpdates = updates.filter(update => update.type === 'check');
 
-      // Get unique shops from check updates
-      const shopsFromChecks = checkUpdates.map(update => {
-        const checkData = update.data as Check;
-        return {
-          id: checkData.shopId,
-          name: checkData.shopName
-        };
-      });
-
-      // Create a Map to store unique shops by ID
-      const uniqueShops = new Map<string, Shop>();
-
-      // Add shops from explicit shop updates
-      shopUpdates.forEach(update => {
-        const shopData = update.data as Shop;
-        uniqueShops.set(shopData.id, shopData);
-      });
-
-      // Add shops from check data
-      shopsFromChecks.forEach(shop => {
-        if (!uniqueShops.has(shop.id)) {
-          uniqueShops.set(shop.id, shop);
-        }
-      });
-
       // Process all unique shops first
-      console.log('Processing unique shops:', Array.from(uniqueShops.values()));
-      for (const shop of uniqueShops.values()) {
+      for (const update of shopUpdates) {
         try {
-          await storage.createOrUpdateShop(shop);
+          const shopData = update.data as Shop;
+          await storage.createOrUpdateShop(shopData);
         } catch (error) {
           throw new Error(`Failed to process shop: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
 
       // Then process all check updates
-      console.log('Processing check updates:', checkUpdates);
       for (const update of checkUpdates) {
         const checkData = update.data as Check;
         try {
