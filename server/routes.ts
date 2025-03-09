@@ -16,24 +16,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: 'ok' });
   });
 
-  // Add endpoint to publish expenses
-  app.post('/api/expenses/publish', (req, res) => {
-    try {
-      const expenses = req.body;
-      res.json({ 
-        success: true, 
-        message: 'Expenses published successfully',
-        count: expenses.length 
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        success: false, 
-        message: 'Failed to publish expenses',
-        error: error.message
-      });
-    }
-  });
-
+  // Add endpoint to get shops
   app.get('/api/shops', async (req, res) => {
     try {
       const shops = await storage.getShops();
