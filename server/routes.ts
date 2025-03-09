@@ -1,7 +1,10 @@
-import type { Express } from "express";
+import type { Express, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { Check, Shop } from "@shared/schema";
+import { AuthenticatedRequest, authenticateUser, requireAuth } from "./auth";
+import session from "express-session";
+import cookieParser from "cookie-parser";
 
 interface SyncUpdate {
   type: 'shop' | 'check';
@@ -11,13 +14,56 @@ interface SyncUpdate {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Add ping endpoint for connection status check
-  app.get('/api/ping', (req, res) => {
+  // Add session middleware
+  app.use(cookieParser());
+  app.use(session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
+
+  // Authentication routes
+  app.post('/api/login', async (req: AuthenticatedRequest, res: Response) => {
+    const { username, password } = req.body;
+    try {
+      const user = await authenticateUser(username, password);
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      req.session.user = user;
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  app.post('/api/logout', (req: AuthenticatedRequest, res: Response) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Logout failed' });
+      }
+      res.json({ message: 'Logged out successfully' });
+    });
+  });
+
+  app.get('/api/user', (req: AuthenticatedRequest, res: Response) => {
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    res.json(req.session.user);
+  });
+
+  // Protected routes
+  app.get('/api/ping', requireAuth, (req, res) => {
     res.json({ status: 'ok' });
   });
 
-  // Add endpoint to get shops
-  app.get('/api/shops', async (req, res) => {
+  app.get('/api/shops', requireAuth, async (req, res) => {
     try {
       const shops = await storage.getShops();
       res.json({ success: true, data: shops });
@@ -30,8 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add endpoint to sync updates
-  app.post('/api/sync', async (req, res) => {
+  app.post('/api/sync', requireAuth, async (req, res) => {
     try {
       const updates: SyncUpdate[] = req.body;
       console.log('Processing sync updates:', updates);
@@ -71,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           await storage.createOrUpdateShop(shop);
         } catch (error) {
-          throw new Error(`Failed to process shop: ${error.message}`);
+          throw new Error(`Failed to process shop: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
 
@@ -98,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } catch (error) {
-          throw new Error(`Failed to process check ${update.action}: ${error.message}`);
+          throw new Error(`Failed to process check ${update.action}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
 
@@ -112,8 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: 'Failed to synchronize updates',
-        error: error.message,
-        details: error.stack
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });

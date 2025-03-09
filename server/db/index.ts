@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
 import * as schema from './schema';
+import { initializeDatabase } from './init';
 
 // Initialize SQLite database
 const sqlite = new Database('sqlite.db');
@@ -44,7 +45,32 @@ const createTables = async () => {
       )
     `);
 
+    // Create roles table
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS roles (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE
+      )
+    `);
+
+    // Create users table
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT NOT NULL UNIQUE,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        company TEXT,
+        role_id TEXT NOT NULL,
+        FOREIGN KEY (role_id) REFERENCES roles(id)
+      )
+    `);
+
     console.log('Database tables created successfully');
+
+    // Initialize roles and admin user
+    await initializeDatabase();
   } catch (error) {
     console.error('Error creating database tables:', error);
     throw error;

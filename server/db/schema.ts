@@ -23,3 +23,18 @@ export const checkItems = sqliteTable('check_items', {
   unitOfMeasure: text('unit_of_measure').notNull(),
   total: real('total').notNull(),
 });
+
+export const roles = sqliteTable('roles', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull().unique(),
+});
+
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  passwordHash: text('password_hash').notNull(),
+  company: text('company'),
+  roleId: text('role_id').notNull().references(() => roles.id),
+});
