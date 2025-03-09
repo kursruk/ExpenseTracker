@@ -10,6 +10,8 @@ export const db = drizzle(sqlite, { schema });
 // Create tables if they don't exist
 const createTables = async () => {
   try {
+    console.log('Starting database initialization...');
+
     // Create roles table first (as it's referenced by users)
     sqlite.exec(`
       CREATE TABLE IF NOT EXISTS roles (
@@ -82,6 +84,9 @@ const createTables = async () => {
 };
 
 // Initialize database
-createTables().catch(console.error);
+createTables().catch((error) => {
+  console.error('Failed to initialize database:', error);
+  process.exit(1);
+});
 
 export default db;

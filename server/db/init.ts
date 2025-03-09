@@ -9,6 +9,8 @@ function hashPassword(password: string): string {
 
 export async function initializeDatabase() {
   try {
+    console.log('Starting roles and admin user initialization...'); //Added log statement
+
     // Create roles
     const adminRoleId = uuidv4();
     const userRoleId = uuidv4();
