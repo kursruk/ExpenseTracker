@@ -1,7 +1,7 @@
 import { apiRequest } from "./queryClient";
 import { Check, Shop } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { getShops } from "./storage";
+import { getShops, createOrUpdateShop } from "./storage";
 
 interface SyncUpdate {
   type: 'shop' | 'check';
@@ -61,18 +61,12 @@ class SyncService {
       const localShops = getShops();
       const localShopsMap = new Map(localShops.map(shop => [shop.id, shop]));
 
-      // Find new shops from server
-      const newShops = serverShops.filter(serverShop => 
-        !localShopsMap.has(serverShop.id)
-      );
-
-      // Add new shops to pending updates
-      for (const shop of newShops) {
-        this.addUpdate({
-          type: 'shop',
-          action: 'create',
-          data: shop
-        });
+      // Find new or updated shops from server
+      for (const serverShop of serverShops) {
+        const localShop = localShopsMap.get(serverShop.id);
+        if (!localShop || localShop.name !== serverShop.name) {
+          createOrUpdateShop(serverShop);
+        }
       }
 
       this.lastShopSync = Date.now();
@@ -117,24 +111,17 @@ class SyncService {
     this.syncInProgress = true;
 
     try {
-      // First, send all shop updates
-      const shopUpdates = this.updates.filter(update => update.type === 'shop');
-      if (shopUpdates.length > 0) {
-        const shopResponse = await apiRequest('POST', '/api/sync', shopUpdates);
-        if (!shopResponse.ok) {
-          const error = await shopResponse.json();
-          throw new Error(`Shop sync failed: ${error.message || error.error || 'Unknown error'}`);
-        }
-      }
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.updates)
+      });
 
-      // Then, send all check updates
-      const checkUpdates = this.updates.filter(update => update.type === 'check');
-      if (checkUpdates.length > 0) {
-        const checkResponse = await apiRequest('POST', '/api/sync', checkUpdates);
-        if (!checkResponse.ok) {
-          const error = await checkResponse.json();
-          throw new Error(`Check sync failed: ${error.message || error.error || 'Unknown error'}`);
-        }
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || error.error || 'Failed to sync updates');
       }
 
       // Clear successfully synced updates

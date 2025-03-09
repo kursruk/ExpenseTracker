@@ -1,7 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Check, CheckItem, InsertCheck, InsertCheckItem, Shop } from '@shared/schema';
-import { useSettingsStore } from '@/lib/settings';
-import { syncService } from './sync-service';
 
 // Storage keys
 const SHOPS_KEY = 'shops';
@@ -22,15 +20,23 @@ export function addShop(name: string): Shop {
   };
   shops.push(newShop);
   localStorage.setItem(SHOPS_KEY, JSON.stringify(shops));
-
-  // Queue sync update for shop
-  syncService.addUpdate({
-    type: 'shop',
-    action: 'create',
-    data: newShop
-  });
-
   return newShop;
+}
+
+export function createOrUpdateShop(shop: Shop): Shop {
+  const shops = getShops();
+  const index = shops.findIndex(s => s.id === shop.id);
+
+  if (index >= 0) {
+    // Update existing shop
+    shops[index] = shop;
+  } else {
+    // Add new shop
+    shops.push(shop);
+  }
+
+  localStorage.setItem(SHOPS_KEY, JSON.stringify(shops));
+  return shop;
 }
 
 // Check management
@@ -58,18 +64,10 @@ export function addCheck(year: number, month: number, check: InsertCheck): Check
 
   checks.push(newCheck);
   localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
-
-  // Queue sync update
-  syncService.addUpdate({
-    type: 'check',
-    action: 'create',
-    data: newCheck
-  });
-
   return newCheck;
 }
 
-export function updateCheck(year: number, month: number, checkId: string, items: CheckItem[]): Check {
+export function updateCheck(year: number, month: number, checkId: string, items: InsertCheckItem[]): Check {
   const checks = getChecks(year, month);
   const checkIndex = checks.findIndex(c => c.id === checkId);
 
@@ -91,14 +89,6 @@ export function updateCheck(year: number, month: number, checkId: string, items:
 
   checks[checkIndex] = updatedCheck;
   localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
-
-  // Queue sync update
-  syncService.addUpdate({
-    type: 'check',
-    action: 'update',
-    data: updatedCheck
-  });
-
   return updatedCheck;
 }
 
@@ -130,41 +120,4 @@ export function getAvailableMonths(): { year: number; month: number }[] {
 export function getMonthTotal(year: number, month: number): number {
   const checks = getChecks(year, month);
   return checks.reduce((sum, check) => sum + check.total, 0);
-}
-
-export async function publishExpenses(): Promise<{ success: boolean, message: string }> {
-  const months = getAvailableMonths();
-  const allChecks: Check[] = [];
-
-  months.forEach(monthData => {
-    allChecks.push(...getChecks(monthData.year, monthData.month))
-  })
-
-  const { username, password } = useSettingsStore.getState();
-
-  try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (username && password) {
-      const base64Credentials = btoa(`${username}:${password}`);
-      headers['Authorization'] = `Basic ${base64Credentials}`;
-    }
-
-    const response = await fetch('/api/expenses/publish', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(allChecks)
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to publish expenses');
-    }
-
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    throw new Error('Failed to publish expenses');
-  }
 }
