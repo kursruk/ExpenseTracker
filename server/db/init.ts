@@ -1,4 +1,4 @@
-import { db } from './index';
+import { db } from '../db';
 import { roles, users } from './schema';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
@@ -18,8 +18,10 @@ export async function initializeDatabase() {
       { id: userRoleId, name: 'user' }
     ]);
 
+    console.log('Roles created successfully');
+
     // Create default admin user
-    await db.insert(users).values({
+    const adminUser = {
       id: uuidv4(),
       username: 'admin',
       firstName: 'System',
@@ -27,11 +29,16 @@ export async function initializeDatabase() {
       passwordHash: hashPassword('Admin-123!'),
       company: 'System',
       roleId: adminRoleId
-    });
+    };
 
-    console.log('Database initialized with roles and default admin user');
+    await db.insert(users).values(adminUser);
+
+    console.log('Default admin user created successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
-    throw error;
+    // If error is about duplicate entries, that's fine - means data already exists
+    if (!(error instanceof Error) || !error.message.includes('UNIQUE constraint failed')) {
+      throw error;
+    }
   }
 }

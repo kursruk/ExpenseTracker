@@ -20,23 +20,32 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export async function authenticateUser(username: string, password: string) {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.username, username));
+  console.log('Attempting to authenticate user:', username);
+  try {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
 
-  if (!user || user.passwordHash !== hashPassword(password)) {
-    return null;
+    console.log('Found user:', user ? 'yes' : 'no');
+
+    if (!user || user.passwordHash !== hashPassword(password)) {
+      console.log('Authentication failed: Invalid credentials');
+      return null;
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      company: user.company,
+      roleId: user.roleId
+    };
+  } catch (error) {
+    console.error('Authentication error:', error);
+    throw error;
   }
-
-  return {
-    id: user.id,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    company: user.company,
-    roleId: user.roleId
-  };
 }
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
