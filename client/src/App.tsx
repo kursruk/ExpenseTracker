@@ -10,6 +10,9 @@ import AddCheckPage from "@/pages/expenses/add";
 import SettingsPage from "@/pages/settings";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { syncService } from "@/lib/sync-service";
+import { useToast } from "@/hooks/use-toast";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -28,6 +31,28 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Initial sync when app loads
+    const initialSync = async () => {
+      try {
+        if (navigator.onLine) {
+          await syncService.sync();
+        }
+      } catch (error) {
+        console.error('Initial sync failed:', error);
+        toast({
+          variant: "destructive",
+          title: "Sync Error",
+          description: "Failed to sync data. Please try manual sync later."
+        });
+      }
+    };
+
+    initialSync();
+  }, [toast]);
+
   return (
     <Layout>
       <Switch>
