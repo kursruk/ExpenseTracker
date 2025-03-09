@@ -201,7 +201,8 @@ export async function getAvailableMonths(): Promise<{ year: number; month: numbe
     if (!response.ok) {
       throw new Error('Failed to fetch available months');
     }
-    return await response.json();
+    const { data } = await response.json();
+    return data;
   } catch (error) {
     // Fallback to local storage
     const months: { year: number; month: number }[] = [];
