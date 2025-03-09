@@ -35,25 +35,36 @@ export default function CheckView({ params }: CheckViewProps) {
   const month = parseInt(params.month);
 
   useEffect(() => {
-    const loadedCheck = getCheck(year, month, params.id);
-    if (!loadedCheck) {
-      navigate("/expenses");
-      return;
-    }
-    setCheck(loadedCheck);
-    setShops(getShops());
+    const loadData = async () => {
+      try {
+        const loadedCheck = await getCheck(year, month, params.id);
+        if (!loadedCheck) {
+          navigate("/expenses");
+          return;
+        }
+        setCheck(loadedCheck);
+
+        const loadedShops = await getShops();
+        setShops(loadedShops);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        navigate("/expenses");
+      }
+    };
+
+    loadData();
   }, [params.id]);
 
   useEffect(() => {
     setNewItemTotal((newItem.price || 0) * (newItem.count || 0));
   }, [newItem.price, newItem.count]);
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     if (!check || !newItem.productName) return;
 
     const items = [...check.items];
     const newItems = [...items, newItem as InsertCheckItem];
-    const updatedCheck = updateCheck(year, month, check.id, newItems);
+    const updatedCheck = await updateCheck(year, month, check.id, newItems);
     setCheck(updatedCheck);
     setNewItem({
       productName: "",
@@ -64,13 +75,13 @@ export default function CheckView({ params }: CheckViewProps) {
     setNewItemTotal(0);
   };
 
-  const handleUpdateItem = (index: number, updates: Partial<InsertCheckItem>) => {
+  const handleUpdateItem = async (index: number, updates: Partial<InsertCheckItem>) => {
     if (!check) return;
 
     const items = [...check.items];
     items[index] = { ...items[index], ...updates };
 
-    const updatedCheck = updateCheck(year, month, check.id, items.map(item => ({
+    const updatedCheck = await updateCheck(year, month, check.id, items.map(item => ({
       productName: item.productName,
       price: item.price,
       count: item.count,
@@ -79,9 +90,9 @@ export default function CheckView({ params }: CheckViewProps) {
     setCheck(updatedCheck);
   };
 
-  const handleSaveAndReturn = () => {
+  const handleSaveAndReturn = async () => {
     if (newItem.productName?.trim()) {
-      handleAddItem();
+      await handleAddItem();
     }
     localStorage.setItem('current_month', `${year}-${month}`);
     navigate("/expenses");
@@ -102,10 +113,10 @@ export default function CheckView({ params }: CheckViewProps) {
             <span>Check #{check.checkNumber}</span>
             <Select
               value={check.shopId}
-              onValueChange={(value) => {
+              onValueChange={async (value) => {
                 const shop = shops.find(s => s.id === value);
                 if (shop) {
-                  const updatedCheck = updateCheck(year, month, check.id, check.items);
+                  const updatedCheck = await updateCheck(year, month, check.id, check.items);
                   setCheck(updatedCheck);
                 }
               }}
