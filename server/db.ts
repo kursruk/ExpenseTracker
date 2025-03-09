@@ -1,43 +1,14 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
 import * as schema from "./db/schema";
-import { initializeDatabase } from './db/init';
 
 // Initialize SQLite database
 const sqlite = new Database('sqlite.db');
 export const db = drizzle(sqlite, { schema });
 
 // Create tables if they don't exist
-async function createTables() {
+const createTables = async () => {
   try {
-    console.log('Starting database initialization...');
-
-    // Create roles table first (as it's referenced by users)
-    sqlite.exec(`
-      CREATE TABLE IF NOT EXISTS roles (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE
-      )
-    `);
-
-    console.log('Roles table created');
-
-    // Create users table
-    sqlite.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        username TEXT NOT NULL UNIQUE,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        password_hash TEXT NOT NULL,
-        company TEXT,
-        role_id TEXT NOT NULL,
-        FOREIGN KEY (role_id) REFERENCES roles(id)
-      )
-    `);
-
-    console.log('Users table created');
-
     // Create shops table
     sqlite.exec(`
       CREATE TABLE IF NOT EXISTS shops (
@@ -73,20 +44,14 @@ async function createTables() {
       )
     `);
 
-    console.log('All tables created successfully');
-
-    // Initialize roles and admin user
-    await initializeDatabase();
+    console.log('Database tables created successfully');
   } catch (error) {
     console.error('Error creating database tables:', error);
     throw error;
   }
-}
+};
 
 // Initialize database
-createTables().catch((error) => {
-  console.error('Failed to initialize database:', error);
-  process.exit(1);
-});
+createTables().catch(console.error);
 
 export default db;

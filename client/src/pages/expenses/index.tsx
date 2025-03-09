@@ -19,44 +19,25 @@ interface MonthData {
 export default function ExpensesPage() {
   const [, navigate] = useLocation();
   const { format } = useCurrency();
-  const [expandedMonths, setExpandedMonths] = useState<MonthData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [expandedMonths, setExpandedMonths] = useState<MonthData[]>(() => {
+    const availableMonths = getAvailableMonths();
+    // Get both expanded states - from save operation and current month
+    const currentMonth = localStorage.getItem('current_month');
 
-  useEffect(() => {
-    const loadMonths = async () => {
-      try {
-        const availableMonths = await getAvailableMonths();
-        const currentMonth = localStorage.getItem('current_month');
+    return availableMonths.map(({ year, month }) => ({
+      year,
+      month,
+      expanded: currentMonth === `${year}-${month}`,
+      checks: currentMonth === `${year}-${month}` ? getChecks(year, month) : [],
+      total: getMonthTotal(year, month)
+    }));
+  });
 
-        const monthsData = await Promise.all(availableMonths.map(async ({ year, month }) => {
-          const isCurrentMonth = currentMonth === `${year}-${month}`;
-          const checks = isCurrentMonth ? await getChecks(year, month) : [];
-          const total = await getMonthTotal(year, month);
-
-          return {
-            year,
-            month,
-            expanded: isCurrentMonth,
-            checks,
-            total
-          };
-        }));
-
-        setExpandedMonths(monthsData);
-      } catch (error) {
-        console.error('Failed to load months:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadMonths();
-  }, []);
-
-  const toggleMonth = async (year: number, month: number) => {
-    setExpandedMonths(prev => prev.map(async m => {
+  const toggleMonth = (year: number, month: number) => {
+    setExpandedMonths(prev => prev.map(m => {
       if (m.year === year && m.month === month) {
         const newExpanded = !m.expanded;
+        // Update localStorage when manually toggling
         if (newExpanded) {
           localStorage.setItem('current_month', `${year}-${month}`);
         } else {
@@ -65,8 +46,8 @@ export default function ExpensesPage() {
         return {
           ...m,
           expanded: newExpanded,
-          checks: newExpanded ? await getChecks(year, month) : m.checks,
-          total: await getMonthTotal(year, month)
+          checks: newExpanded ? getChecks(year, month) : m.checks,
+          total: getMonthTotal(year, month)
         };
       }
       return m;
@@ -79,18 +60,6 @@ export default function ExpensesPage() {
       month: 'long'
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-6 px-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading...</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto py-6 px-4">

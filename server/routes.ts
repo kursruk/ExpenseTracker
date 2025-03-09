@@ -1,10 +1,7 @@
-import type { Express, Response } from "express";
+import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { Check, Shop } from "@shared/schema";
-import { AuthenticatedRequest, authenticateUser, requireAuth } from "./auth";
-import session from "express-session";
-import cookieParser from "cookie-parser";
 
 interface SyncUpdate {
   type: 'shop' | 'check';
@@ -14,52 +11,13 @@ interface SyncUpdate {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Add session middleware
-  app.use(cookieParser());
-  app.use(session({
-    secret: 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  }));
-
-  // Authentication routes
-  app.post('/api/login', async (req: AuthenticatedRequest, res: Response) => {
-    const { username, password } = req.body;
-    try {
-      const user = await authenticateUser(username, password);
-      if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-      req.session.user = user;
-      res.json(user);
-    } catch (error) {
-      res.status(500).json({ error: 'Login failed' });
-    }
+  // Add ping endpoint for connection status check
+  app.get('/api/ping', (req, res) => {
+    res.json({ status: 'ok' });
   });
 
-  app.post('/api/logout', (req: AuthenticatedRequest, res: Response) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Logout failed' });
-      }
-      res.json({ message: 'Logged out successfully' });
-    });
-  });
-
-  app.get('/api/user', (req: AuthenticatedRequest, res: Response) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-    res.json(req.session.user);
-  });
-
-  // Protected routes
-  app.get('/api/shops', requireAuth, async (req, res) => {
+  // Add endpoint to get shops
+  app.get('/api/shops', async (req, res) => {
     try {
       const shops = await storage.getShops();
       res.json({ success: true, data: shops });
@@ -72,101 +30,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/shops', requireAuth, async (req, res) => {
-    try {
-      const shop = await storage.createOrUpdateShop(req.body);
-      res.json({ success: true, data: shop });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to create shop',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.get('/api/checks/:year/:month', requireAuth, async (req, res) => {
-    try {
-      const year = parseInt(req.params.year);
-      const month = parseInt(req.params.month);
-      const checks = await storage.getChecks(year, month);
-      res.json({ success: true, data: checks });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to get checks',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.get('/api/checks/:year/:month/:id', requireAuth, async (req, res) => {
-    try {
-      const year = parseInt(req.params.year);
-      const month = parseInt(req.params.month);
-      const check = await storage.getCheck(year, month, req.params.id);
-      if (!check) {
-        return res.status(404).json({
-          success: false,
-          message: 'Check not found'
-        });
-      }
-      res.json({ success: true, data: check });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to get check',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.post('/api/checks/:year/:month', requireAuth, async (req, res) => {
-    try {
-      const year = parseInt(req.params.year);
-      const month = parseInt(req.params.month);
-      const check = await storage.createCheck(year, month, req.body);
-      res.json({ success: true, data: check });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to create check',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.put('/api/checks/:year/:month/:id', requireAuth, async (req, res) => {
-    try {
-      const year = parseInt(req.params.year);
-      const month = parseInt(req.params.month);
-      const check = await storage.updateCheck(year, month, req.params.id, req.body.items);
-      res.json({ success: true, data: check });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to update check',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.get('/api/checks/months', requireAuth, async (req, res) => {
-    try {
-      // Get all available months from the checks table
-      const months = await storage.getAvailableMonths();
-      res.json({ success: true, data: months });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to get available months',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Sync route
-  app.post('/api/sync', requireAuth, async (req, res) => {
+  // Add endpoint to sync updates
+  app.post('/api/sync', async (req, res) => {
     try {
       const updates: SyncUpdate[] = req.body;
       console.log('Processing sync updates:', updates);
@@ -175,17 +40,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const shopUpdates = updates.filter(update => update.type === 'shop');
       const checkUpdates = updates.filter(update => update.type === 'check');
 
+      // Get unique shops from check updates
+      const shopsFromChecks = checkUpdates.map(update => {
+        const checkData = update.data as Check;
+        return {
+          id: checkData.shopId,
+          name: checkData.shopName
+        };
+      });
+
+      // Create a Map to store unique shops by ID
+      const uniqueShops = new Map<string, Shop>();
+
+      // Add shops from explicit shop updates
+      shopUpdates.forEach(update => {
+        const shopData = update.data as Shop;
+        uniqueShops.set(shopData.id, shopData);
+      });
+
+      // Add shops from check data
+      shopsFromChecks.forEach(shop => {
+        if (!uniqueShops.has(shop.id)) {
+          uniqueShops.set(shop.id, shop);
+        }
+      });
+
       // Process all unique shops first
-      for (const update of shopUpdates) {
+      console.log('Processing unique shops:', Array.from(uniqueShops.values()));
+      for (const shop of uniqueShops.values()) {
         try {
-          const shopData = update.data as Shop;
-          await storage.createOrUpdateShop(shopData);
+          await storage.createOrUpdateShop(shop);
         } catch (error) {
-          throw new Error(`Failed to process shop: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(`Failed to process shop: ${error.message}`);
         }
       }
 
       // Then process all check updates
+      console.log('Processing check updates:', checkUpdates);
       for (const update of checkUpdates) {
         const checkData = update.data as Check;
         try {
@@ -207,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         } catch (error) {
-          throw new Error(`Failed to process check ${update.action}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(`Failed to process check ${update.action}: ${error.message}`);
         }
       }
 
@@ -221,7 +112,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: 'Failed to synchronize updates',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error.message,
+        details: error.stack
       });
     }
   });
