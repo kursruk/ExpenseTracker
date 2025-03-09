@@ -34,6 +34,14 @@ export async function initializeDatabase() {
     await db.insert(users).values(adminUser);
 
     console.log('Default admin user created successfully');
+
+    // Verify roles and admin user
+    const createdRoles = await db.select().from(roles);
+    const createdUsers = await db.select().from(users);
+
+    console.log('Created roles:', createdRoles);
+    console.log('Created users:', createdUsers);
+
   } catch (error) {
     console.error('Error initializing database:', error);
     // If error is about duplicate entries, that's fine - means data already exists
