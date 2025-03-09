@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Check, CheckItem, InsertCheck, InsertCheckItem, Shop } from '@shared/schema';
+import { syncService } from './sync-service';
 
 // Storage keys
 const SHOPS_KEY = 'shops';
@@ -20,6 +21,14 @@ export function addShop(name: string): Shop {
   };
   shops.push(newShop);
   localStorage.setItem(SHOPS_KEY, JSON.stringify(shops));
+
+  // Queue sync update for shop
+  syncService.addUpdate({
+    type: 'shop',
+    action: 'create',
+    data: newShop
+  });
+
   return newShop;
 }
 
@@ -30,9 +39,19 @@ export function createOrUpdateShop(shop: Shop): Shop {
   if (index >= 0) {
     // Update existing shop
     shops[index] = shop;
+    syncService.addUpdate({
+      type: 'shop',
+      action: 'update',
+      data: shop
+    });
   } else {
     // Add new shop
     shops.push(shop);
+    syncService.addUpdate({
+      type: 'shop',
+      action: 'create',
+      data: shop
+    });
   }
 
   localStorage.setItem(SHOPS_KEY, JSON.stringify(shops));
@@ -64,6 +83,14 @@ export function addCheck(year: number, month: number, check: InsertCheck): Check
 
   checks.push(newCheck);
   localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
+
+  // Queue sync update for check
+  syncService.addUpdate({
+    type: 'check',
+    action: 'create',
+    data: newCheck
+  });
+
   return newCheck;
 }
 
@@ -89,6 +116,14 @@ export function updateCheck(year: number, month: number, checkId: string, items:
 
   checks[checkIndex] = updatedCheck;
   localStorage.setItem(getMonthKey(year, month), JSON.stringify(checks));
+
+  // Queue sync update for check
+  syncService.addUpdate({
+    type: 'check',
+    action: 'update',
+    data: updatedCheck
+  });
+
   return updatedCheck;
 }
 
